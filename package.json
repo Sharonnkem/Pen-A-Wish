@@ -1,0 +1,19 @@
+{
+  "name": "pen-a-wish",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "dev:frontend": "npm run dev --workspace frontend",
+    "dev:backend": "npm run dev --workspace backend",
+    "build": "npm run build --workspace frontend && npm run build --workspace backend",
+    "typecheck": "npm run typecheck --workspace shared && npm run typecheck --workspace frontend && npm run typecheck --workspace backend"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
