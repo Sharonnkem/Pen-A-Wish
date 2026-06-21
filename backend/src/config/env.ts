@@ -12,10 +12,28 @@ function readRequired(name: string, fallback?: string) {
   return value;
 }
 
+function isLocalOrigin(origin: string) {
+  return /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+}
+
+function parseOrigins(value: string) {
+  return value
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+const frontendOrigins = parseOrigins(
+  readRequired("FRONTEND_URL", "http://localhost:5173")
+);
+const primaryFrontendUrl =
+  frontendOrigins.find((origin) => !isLocalOrigin(origin)) ?? frontendOrigins[0];
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: Number(process.env.PORT ?? 4000),
-  frontendUrl: readRequired("FRONTEND_URL", "http://localhost:5173"),
+  frontendOrigins,
+  frontendUrl: primaryFrontendUrl ?? "http://localhost:5173",
   databaseUrl: readRequired(
     "DATABASE_URL",
     "postgresql://postgres:postgres@localhost:5432/pen_a_wish"

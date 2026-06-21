@@ -16,10 +16,7 @@ import { errorHandler } from "./middleware/error.middleware.js";
 
 export function createApp() {
   const app = express();
-  const configuredOrigins = env.frontendUrl
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+  const configuredOrigins = env.frontendOrigins;
 
   app.use(
     cors({
