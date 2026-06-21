@@ -3,12 +3,15 @@ import type { Response } from "express";
 import { env } from "../config/env.js";
 
 function getCookieSettings(maxAge: number) {
+  const isProduction = env.nodeEnv === "production";
+  const sameSite: "none" | "lax" = isProduction ? "none" : "lax";
+
   return {
     httpOnly: true,
     maxAge,
     path: "/",
-    sameSite: "lax" as const,
-    secure: env.nodeEnv === "production"
+    sameSite,
+    secure: isProduction
   };
 }
 
@@ -21,4 +24,3 @@ export function setRefreshTokenCookie(response: Response, refreshToken: string) 
 export function clearRefreshTokenCookie(response: Response) {
   response.clearCookie(env.authCookieName, getCookieSettings(0));
 }
-
