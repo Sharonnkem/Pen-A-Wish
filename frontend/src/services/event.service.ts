@@ -1,7 +1,7 @@
-import { apiClient } from "@/services/api";
-import { appConfig } from "@/config/app";
-import { ApiError } from "@/services/api";
-import { getAccessToken } from "@/services/token-storage";
+import { apiClient } from "./api";
+import { appConfig } from "../config/app";
+import { ApiError } from "./api";
+import { getAccessToken } from "./token-storage";
 import type {
   CelebrationEvent,
   CreateEventInput,
@@ -9,9 +9,9 @@ import type {
   PublicGuestbookEntry,
   PublicCelebrationEvent,
   PublicWishWall
-} from "@/types/event";
-import type { PublicWishPreview } from "@/types/event";
-import type { WishWallSettings } from "@/types/wish-wall";
+} from "../types/event";
+import type { PublicWishPreview } from "../types/event";
+import type { WishWallSettings } from "../types/wish-wall";
 
 type EventEnvelope = {
   success: true;

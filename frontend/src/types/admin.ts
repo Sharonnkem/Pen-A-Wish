@@ -1,5 +1,5 @@
-import type { AdminWithdrawal } from "@/types/wallet";
-import type { UserRole } from "@/types/auth";
+import type { AdminWithdrawal } from "./wallet";
+import type { UserRole } from "./auth";
 
 export type AdminPagination = {
   page: number;

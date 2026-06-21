@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { Card } from "@/components/cards/Card";
-import { Button } from "@/components/common/Button";
-import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
-import { useToast } from "@/components/common/Toast";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { dashboardService } from "@/services/dashboard.service";
+import { Card } from "../../components/cards/Card";
+import { Button } from "../../components/common/Button";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingState } from "../../components/common/LoadingState";
+import { useToast } from "../../components/common/Toast";
+import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { dashboardService } from "../../services/dashboard.service";
 
 export function EventGuestbookPage() {
   const { id = "" } = useParams();

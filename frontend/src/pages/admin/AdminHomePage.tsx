@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
-import { Card } from "@/components/cards/Card";
-import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
-import { AdminLayout } from "@/components/admin/AdminLayout";
-import { adminService } from "@/services/admin.service";
-import { formatNairaFromKobo } from "@/utils/currency";
+import { Card } from "../../components/cards/Card";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingState } from "../../components/common/LoadingState";
+import { AdminLayout } from "../../components/admin/AdminLayout";
+import { adminService } from "../../services/admin.service";
+import { formatNairaFromKobo } from "../../utils/currency";
 
 const adminDestinations = [
   {

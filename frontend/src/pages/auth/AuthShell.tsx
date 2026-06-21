@@ -1,9 +1,9 @@
 import type { PropsWithChildren } from "react";
 import { Link } from "react-router-dom";
 
-import { Card } from "@/components/cards/Card";
-import { PageTransition } from "@/components/animations/PageTransition";
-import { appConfig } from "@/config/app";
+import { Card } from "../../components/cards/Card";
+import { PageTransition } from "../../components/animations/PageTransition";
+import { appConfig } from "../../config/app";
 
 type AuthShellProps = PropsWithChildren<{
   eyebrow: string;

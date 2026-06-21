@@ -1,8 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
 
-import { AdminRoute } from "@/routes/AdminRoute";
-import { ProtectedRoute } from "@/routes/ProtectedRoute";
-import { PublicOnlyRoute } from "@/routes/PublicOnlyRoute";
+import { AdminRoute } from "./AdminRoute";
+import { ProtectedRoute } from "./ProtectedRoute";
+import { PublicOnlyRoute } from "./PublicOnlyRoute";
 import {
   AdminCelebrationsPage,
   AdminGiftsPage,
@@ -11,35 +11,35 @@ import {
   AdminUsersPage,
   AdminWithdrawalsPage,
   AdminWishesPage
-} from "@/pages/admin";
-import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
-import { LoginPage } from "@/pages/auth/LoginPage";
-import { RegisterPage } from "@/pages/auth/RegisterPage";
-import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
-import { AccountSettingsPage } from "@/pages/dashboard/AccountSettingsPage";
-import { CelebrationDetailsPage } from "@/pages/dashboard/CelebrationDetailsPage";
-import { CreateCelebrationPage } from "@/pages/dashboard/CreateCelebrationPage";
-import { DashboardHomePage } from "@/pages/dashboard/DashboardHomePage";
-import { EventGuestbookPage } from "@/pages/dashboard/EventGuestbookPage";
-import { EditCelebrationPage } from "@/pages/dashboard/EditCelebrationPage";
-import { MyCelebrationsPage } from "@/pages/dashboard/MyCelebrationsPage";
-import { TransactionHistoryPage } from "@/pages/dashboard/TransactionHistoryPage";
-import { WalletPage } from "@/pages/dashboard/WalletPage";
-import { WallStudioPage } from "@/pages/dashboard/WallStudioPage";
-import { WithdrawalRequestPage } from "@/pages/dashboard/WithdrawalRequestPage";
-import { NotFoundPage } from "@/pages/errors/NotFoundPage";
-import { RouteErrorPage } from "@/pages/errors/RouteErrorPage";
-import { ServerErrorPage } from "@/pages/errors/ServerErrorPage";
-import { ContactPage } from "@/pages/public/ContactPage";
-import { PublicEventPage } from "@/pages/public/PublicEventPage";
-import { LandingPage } from "@/pages/public/LandingPage";
-import { PaymentFailedPage } from "@/pages/public/PaymentFailedPage";
-import { PaymentSuccessPage } from "@/pages/public/PaymentSuccessPage";
-import { PrivacyPolicyPage } from "@/pages/public/PrivacyPolicyPage";
-import { PublicWishWallPage } from "@/pages/public/PublicWishWallPage";
-import { WishWallExportPage } from "@/pages/public/WishWallExportPage";
-import { TermsOfServicePage } from "@/pages/public/TermsOfServicePage";
-import { UiSystemPage } from "@/pages/UiSystemPage";
+} from "../pages/admin";
+import { ForgotPasswordPage } from "../pages/auth/ForgotPasswordPage";
+import { LoginPage } from "../pages/auth/LoginPage";
+import { RegisterPage } from "../pages/auth/RegisterPage";
+import { ResetPasswordPage } from "../pages/auth/ResetPasswordPage";
+import { AccountSettingsPage } from "../pages/dashboard/AccountSettingsPage";
+import { CelebrationDetailsPage } from "../pages/dashboard/CelebrationDetailsPage";
+import { CreateCelebrationPage } from "../pages/dashboard/CreateCelebrationPage";
+import { DashboardHomePage } from "../pages/dashboard/DashboardHomePage";
+import { EventGuestbookPage } from "../pages/dashboard/EventGuestbookPage";
+import { EditCelebrationPage } from "../pages/dashboard/EditCelebrationPage";
+import { MyCelebrationsPage } from "../pages/dashboard/MyCelebrationsPage";
+import { TransactionHistoryPage } from "../pages/dashboard/TransactionHistoryPage";
+import { WalletPage } from "../pages/dashboard/WalletPage";
+import { WallStudioPage } from "../pages/dashboard/WallStudioPage";
+import { WithdrawalRequestPage } from "../pages/dashboard/WithdrawalRequestPage";
+import { NotFoundPage } from "../pages/errors/NotFoundPage";
+import { RouteErrorPage } from "../pages/errors/RouteErrorPage";
+import { ServerErrorPage } from "../pages/errors/ServerErrorPage";
+import { ContactPage } from "../pages/public/ContactPage";
+import { PublicEventPage } from "../pages/public/PublicEventPage";
+import { LandingPage } from "../pages/public/LandingPage";
+import { PaymentFailedPage } from "../pages/public/PaymentFailedPage";
+import { PaymentSuccessPage } from "../pages/public/PaymentSuccessPage";
+import { PrivacyPolicyPage } from "../pages/public/PrivacyPolicyPage";
+import { PublicWishWallPage } from "../pages/public/PublicWishWallPage";
+import { WishWallExportPage } from "../pages/public/WishWallExportPage";
+import { TermsOfServicePage } from "../pages/public/TermsOfServicePage";
+import { UiSystemPage } from "../pages/UiSystemPage";
 
 export const router = createBrowserRouter([
   {

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import { Button } from "@/components/common/Button";
-import { cn } from "@/utils/cn";
+import { Button } from "./Button";
+import { cn } from "../../utils/cn";
 
 type EmptyStateProps = {
   actionLabel?: string;

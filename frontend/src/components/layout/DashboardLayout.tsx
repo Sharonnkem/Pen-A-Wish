@@ -1,9 +1,9 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
-import { Button } from "@/components/common/Button";
-import { useAuth } from "@/context/AuthContext";
-import { cn } from "@/utils/cn";
+import { Button } from "../common/Button";
+import { useAuth } from "../../context/AuthContext";
+import { cn } from "../../utils/cn";
 
 type DashboardLayoutProps = PropsWithChildren<{
   actions?: ReactNode;

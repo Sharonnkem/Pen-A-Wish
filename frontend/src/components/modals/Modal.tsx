@@ -3,7 +3,7 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 
-import { Button } from "@/components/common/Button";
+import { Button } from "../common/Button";
 
 type ModalProps = PropsWithChildren<{
   description?: string;

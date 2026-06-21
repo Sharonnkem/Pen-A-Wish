@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 
-import { Card } from "@/components/cards/Card";
-import { Button } from "@/components/common/Button";
-import { useToast } from "@/components/common/Toast";
-import { FormField } from "@/components/forms/FormField";
-import { Input } from "@/components/forms/Input";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useAuth } from "@/context/AuthContext";
-import { authService } from "@/services/auth.service";
+import { Card } from "../../components/cards/Card";
+import { Button } from "../../components/common/Button";
+import { useToast } from "../../components/common/Toast";
+import { FormField } from "../../components/forms/FormField";
+import { Input } from "../../components/forms/Input";
+import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { useAuth } from "../../context/AuthContext";
+import { authService } from "../../services/auth.service";
 
 type LocalPreferences = {
   emailNotifications: boolean;

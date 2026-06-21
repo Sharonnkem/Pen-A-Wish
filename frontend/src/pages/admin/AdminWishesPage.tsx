@@ -1,18 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 
-import { AdminConfirmationModal } from "@/components/admin/AdminConfirmationModal";
-import { AdminFilterBar } from "@/components/admin/AdminFilterBar";
-import { AdminLayout } from "@/components/admin/AdminLayout";
-import { AdminPagination } from "@/components/admin/AdminPagination";
-import { Card } from "@/components/cards/Card";
-import { Button } from "@/components/common/Button";
-import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
-import { useToast } from "@/components/common/Toast";
-import { Select, SelectOption } from "@/components/forms/Select";
-import { ApiError } from "@/services/api";
-import { adminService } from "@/services/admin.service";
+import { AdminConfirmationModal } from "../../components/admin/AdminConfirmationModal";
+import { AdminFilterBar } from "../../components/admin/AdminFilterBar";
+import { AdminLayout } from "../../components/admin/AdminLayout";
+import { AdminPagination } from "../../components/admin/AdminPagination";
+import { Card } from "../../components/cards/Card";
+import { Button } from "../../components/common/Button";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingState } from "../../components/common/LoadingState";
+import { useToast } from "../../components/common/Toast";
+import { Select, SelectOption } from "../../components/forms/Select";
+import { ApiError } from "../../services/api";
+import { adminService } from "../../services/admin.service";
 
 export function AdminWishesPage() {
   const queryClient = useQueryClient();

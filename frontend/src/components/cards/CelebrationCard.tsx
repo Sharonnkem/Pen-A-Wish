@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 
-import { Card } from "@/components/cards/Card";
-import { Button } from "@/components/common/Button";
-import { useToast } from "@/components/common/Toast";
-import type { CelebrationEvent } from "@/types/event";
+import { Card } from "./Card";
+import { Button } from "../common/Button";
+import { useToast } from "../common/Toast";
+import type { CelebrationEvent } from "../../types/event";
 
 type CelebrationCardProps = {
   event: CelebrationEvent;

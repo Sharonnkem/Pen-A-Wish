@@ -1,7 +1,7 @@
 import type { OptionHTMLAttributes, SelectHTMLAttributes } from "react";
 import { forwardRef } from "react";
 
-import { cn } from "@/utils/cn";
+import { cn } from "../../utils/cn";
 
 type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   hasError?: boolean;

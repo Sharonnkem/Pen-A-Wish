@@ -7,15 +7,15 @@ import {
   type PropsWithChildren
 } from "react";
 
-import { authService } from "@/services/auth.service";
+import { authService } from "../services/auth.service";
 import {
   clearStoredSession,
   getAccessToken,
   getStoredUser,
   setAccessToken,
   setStoredUser
-} from "@/services/token-storage";
-import type { AuthUser } from "@/types/auth";
+} from "../services/token-storage";
+import type { AuthUser } from "../types/auth";
 
 type AuthContextValue = {
   forgotPassword: (input: { email: string }) => Promise<string>;

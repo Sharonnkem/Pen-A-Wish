@@ -1,5 +1,5 @@
-import { ApiStatusCard } from "@/components/common/ApiStatusCard";
-import { appConfig } from "@/config/app";
+import { ApiStatusCard } from "../components/common/ApiStatusCard";
+import { appConfig } from "../config/app";
 
 const checklist = [
   "React + TypeScript + Vite frontend scaffold",

@@ -2,9 +2,9 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { PageTransition } from "@/components/animations/PageTransition";
-import { Button } from "@/components/common/Button";
-import { useAuth } from "@/context/AuthContext";
+import { PageTransition } from "../../components/animations/PageTransition";
+import { Button } from "../../components/common/Button";
+import { useAuth } from "../../context/AuthContext";
 
 const heroWishes = [
   {

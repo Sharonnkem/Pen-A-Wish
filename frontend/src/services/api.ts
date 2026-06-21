@@ -1,5 +1,5 @@
-import { appConfig } from "@/config/app";
-import { getAccessToken } from "@/services/token-storage";
+import { appConfig } from "../config/app";
+import { getAccessToken } from "./token-storage";
 
 export class ApiError extends Error {
   public readonly errors: string[];

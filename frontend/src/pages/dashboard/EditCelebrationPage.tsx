@@ -1,15 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { Card } from "@/components/cards/Card";
-import { Button } from "@/components/common/Button";
-import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
-import { useToast } from "@/components/common/Toast";
-import { CelebrationForm } from "@/components/forms/CelebrationForm";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { eventService } from "@/services/event.service";
-import type { CreateEventInput } from "@/types/event";
+import { Card } from "../../components/cards/Card";
+import { Button } from "../../components/common/Button";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingState } from "../../components/common/LoadingState";
+import { useToast } from "../../components/common/Toast";
+import { CelebrationForm } from "../../components/forms/CelebrationForm";
+import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { eventService } from "../../services/event.service";
+import type { CreateEventInput } from "../../types/event";
 
 export function EditCelebrationPage() {
   const { id = "" } = useParams();

@@ -2,11 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Link, useParams } from "react-router-dom";
 
-import { PageTransition } from "@/components/animations/PageTransition";
-import { Button } from "@/components/common/Button";
-import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
-import { eventService } from "@/services/event.service";
+import { PageTransition } from "../../components/animations/PageTransition";
+import { Button } from "../../components/common/Button";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingState } from "../../components/common/LoadingState";
+import { eventService } from "../../services/event.service";
 
 const wallStyles = [
   {

@@ -1,7 +1,7 @@
 import type { InputHTMLAttributes } from "react";
 import { forwardRef } from "react";
 
-import { cn } from "@/utils/cn";
+import { cn } from "../../utils/cn";
 
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   hasError?: boolean;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { healthApi } from "@/services/health.service";
+import { healthApi } from "../../services/health.service";
 
 type ApiState = "idle" | "loading" | "success" | "error";
 

@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 
-import { Button } from "@/components/common/Button";
-import { LoadingState } from "@/components/common/LoadingState";
-import { useToast } from "@/components/common/Toast";
-import { FormField } from "@/components/forms/FormField";
-import { Input } from "@/components/forms/Input";
-import { Textarea } from "@/components/forms/Textarea";
-import { eventService } from "@/services/event.service";
-import type { CelebrationEvent, CreateEventInput } from "@/types/event";
+import { Button } from "../common/Button";
+import { LoadingState } from "../common/LoadingState";
+import { useToast } from "../common/Toast";
+import { FormField } from "./FormField";
+import { Input } from "./Input";
+import { Textarea } from "./Textarea";
+import { eventService } from "../../services/event.service";
+import type { CelebrationEvent, CreateEventInput } from "../../types/event";
 
 type CelebrationFormProps = {
   initialEvent?: CelebrationEvent | null;

@@ -1,13 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
-import { Card } from "@/components/cards/Card";
-import { useToast } from "@/components/common/Toast";
-import { CelebrationForm } from "@/components/forms/CelebrationForm";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { ApiError } from "@/services/api";
-import { eventService } from "@/services/event.service";
-import type { CreateEventInput } from "@/types/event";
+import { Card } from "../../components/cards/Card";
+import { useToast } from "../../components/common/Toast";
+import { CelebrationForm } from "../../components/forms/CelebrationForm";
+import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { ApiError } from "../../services/api";
+import { eventService } from "../../services/event.service";
+import type { CreateEventInput } from "../../types/event";
 
 export function CreateCelebrationPage() {
   const navigate = useNavigate();

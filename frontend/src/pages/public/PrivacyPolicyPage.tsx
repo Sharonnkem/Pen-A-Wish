@@ -1,4 +1,4 @@
-import { PublicInfoLayout } from "@/components/layout/PublicInfoLayout";
+import { PublicInfoLayout } from "../../components/layout/PublicInfoLayout";
 
 const sections = [
   {

@@ -1,4 +1,4 @@
-import type { AuthUser } from "@/types/auth";
+import type { AuthUser } from "../types/auth";
 
 const accessTokenKey = "pen_a_wish_access_token";
 const userKey = "pen_a_wish_auth_user";

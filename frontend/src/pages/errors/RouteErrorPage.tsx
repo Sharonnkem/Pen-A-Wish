@@ -1,7 +1,7 @@
 import { isRouteErrorResponse, useRouteError } from "react-router-dom";
 
-import { NotFoundPage } from "@/pages/errors/NotFoundPage";
-import { ServerErrorPage } from "@/pages/errors/ServerErrorPage";
+import { NotFoundPage } from "./NotFoundPage";
+import { ServerErrorPage } from "./ServerErrorPage";
 
 export function RouteErrorPage() {
   const error = useRouteError();

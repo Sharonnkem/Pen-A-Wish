@@ -1,6 +1,6 @@
 import type { HTMLAttributes, PropsWithChildren, ReactNode } from "react";
 
-import { cn } from "@/utils/cn";
+import { cn } from "../../utils/cn";
 
 type CardProps = PropsWithChildren<
   HTMLAttributes<HTMLDivElement> & {

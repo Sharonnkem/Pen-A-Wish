@@ -1,6 +1,6 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
-import { cn } from "@/utils/cn";
+import { cn } from "../../utils/cn";
 
 type FormFieldProps = PropsWithChildren<{
   className?: string;

@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { GuestbookWallPreview } from "@/components/wall/GuestbookWallPreview";
-import { WishWallPreview } from "@/components/wall/WishWallPreview";
-import type { WishWallSettings } from "@/types/wish-wall";
-import type { PublicGuestbookEntry, PublicWishPreview } from "@/types/event";
+import { GuestbookWallPreview } from "../../components/wall/GuestbookWallPreview";
+import { WishWallPreview } from "../../components/wall/WishWallPreview";
+import type { WishWallSettings } from "../../types/wish-wall";
+import type { PublicGuestbookEntry, PublicWishPreview } from "../../types/event";
 
 type ExportPayload = {
   source: "guestbook" | "wishes";

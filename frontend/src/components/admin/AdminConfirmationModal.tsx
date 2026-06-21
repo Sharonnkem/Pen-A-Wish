@@ -1,5 +1,5 @@
-import { Button } from "@/components/common/Button";
-import { Modal } from "@/components/modals/Modal";
+import { Button } from "../common/Button";
+import { Modal } from "../modals/Modal";
 
 type AdminConfirmationModalProps = {
   confirmLabel: string;

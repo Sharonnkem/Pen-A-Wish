@@ -1,7 +1,7 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
-import { Button } from "@/components/common/Button";
-import { cn } from "@/utils/cn";
+import { Button } from "../common/Button";
+import { cn } from "../../utils/cn";
 
 type PublicEventLayoutProps = PropsWithChildren<{
   className?: string;

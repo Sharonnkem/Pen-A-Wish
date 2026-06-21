@@ -1,5 +1,5 @@
-import { apiClient } from "@/services/api";
-import type { AuthResponse } from "@/types/auth";
+import { apiClient } from "./api";
+import type { AuthResponse } from "../types/auth";
 
 type MessageOnlyResponse = {
   success: true;

@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 
-import { LoadingState } from "@/components/common/LoadingState";
-import { useAuth } from "@/context/AuthContext";
+import { LoadingState } from "../components/common/LoadingState";
+import { useAuth } from "../context/AuthContext";
 
 export function HomeRedirect() {
   const { isAuthenticated, isInitializing, user } = useAuth();

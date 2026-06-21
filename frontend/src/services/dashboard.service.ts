@@ -1,9 +1,9 @@
-import { apiClient } from "@/services/api";
+import { apiClient } from "./api";
 import type {
   DashboardOverview,
   EventGuestbookEntry,
   EventWish
-} from "@/types/dashboard";
+} from "../types/dashboard";
 
 export const dashboardService = {
   getOverview() {

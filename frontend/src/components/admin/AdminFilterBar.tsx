@@ -1,7 +1,7 @@
 import type { FormEvent, ReactNode } from "react";
 
-import { Button } from "@/components/common/Button";
-import { Input } from "@/components/forms/Input";
+import { Button } from "../common/Button";
+import { Input } from "../forms/Input";
 
 type AdminFilterBarProps = {
   onReset?: () => void;

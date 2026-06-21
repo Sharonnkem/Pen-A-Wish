@@ -1,8 +1,8 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import { Link } from "react-router-dom";
 
-import { PageTransition } from "@/components/animations/PageTransition";
-import { Button } from "@/components/common/Button";
+import { PageTransition } from "../animations/PageTransition";
+import { Button } from "../common/Button";
 
 type PublicInfoLayoutProps = PropsWithChildren<{
   actions?: ReactNode;

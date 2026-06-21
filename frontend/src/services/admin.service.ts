@@ -1,4 +1,4 @@
-import { apiClient } from "@/services/api";
+import { apiClient } from "./api";
 import type {
   AdminCelebration,
   AdminGift,
@@ -8,7 +8,7 @@ import type {
   AdminUser,
   AdminWish,
   AdminWithdrawalsResponse
-} from "@/types/admin";
+} from "../types/admin";
 
 function buildQuery(params: Record<string, string | number | undefined>) {
   const searchParams = new URLSearchParams();

@@ -2,13 +2,13 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
-import { CelebrationCard } from "@/components/cards/CelebrationCard";
-import { Button } from "@/components/common/Button";
-import { EmptyState } from "@/components/common/EmptyState";
-import { Input } from "@/components/forms/Input";
-import { LoadingState } from "@/components/common/LoadingState";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { eventService } from "@/services/event.service";
+import { CelebrationCard } from "../../components/cards/CelebrationCard";
+import { Button } from "../../components/common/Button";
+import { EmptyState } from "../../components/common/EmptyState";
+import { Input } from "../../components/forms/Input";
+import { LoadingState } from "../../components/common/LoadingState";
+import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { eventService } from "../../services/event.service";
 
 export function MyCelebrationsPage() {
   const navigate = useNavigate();

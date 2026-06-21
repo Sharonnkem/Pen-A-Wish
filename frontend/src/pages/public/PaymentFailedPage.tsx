@@ -1,8 +1,8 @@
 import { Link, useSearchParams } from "react-router-dom";
 
-import { Card } from "@/components/cards/Card";
-import { Button } from "@/components/common/Button";
-import { PublicInfoLayout } from "@/components/layout/PublicInfoLayout";
+import { Card } from "../../components/cards/Card";
+import { Button } from "../../components/common/Button";
+import { PublicInfoLayout } from "../../components/layout/PublicInfoLayout";
 
 export function PaymentFailedPage() {
   const [searchParams] = useSearchParams();

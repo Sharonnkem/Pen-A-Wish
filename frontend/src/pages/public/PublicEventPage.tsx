@@ -3,20 +3,20 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 
-import { PageTransition } from "@/components/animations/PageTransition";
-import { Card } from "@/components/cards/Card";
-import { Button } from "@/components/common/Button";
-import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
-import { useToast } from "@/components/common/Toast";
-import { FormField } from "@/components/forms/FormField";
-import { Input } from "@/components/forms/Input";
-import { Textarea } from "@/components/forms/Textarea";
-import { PublicEventLayout } from "@/components/layout/PublicEventLayout";
-import { Modal } from "@/components/modals/Modal";
-import { ApiError } from "@/services/api";
-import { eventService } from "@/services/event.service";
-import { formatNairaFromKobo } from "@/utils/currency";
+import { PageTransition } from "../../components/animations/PageTransition";
+import { Card } from "../../components/cards/Card";
+import { Button } from "../../components/common/Button";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingState } from "../../components/common/LoadingState";
+import { useToast } from "../../components/common/Toast";
+import { FormField } from "../../components/forms/FormField";
+import { Input } from "../../components/forms/Input";
+import { Textarea } from "../../components/forms/Textarea";
+import { PublicEventLayout } from "../../components/layout/PublicEventLayout";
+import { Modal } from "../../components/modals/Modal";
+import { ApiError } from "../../services/api";
+import { eventService } from "../../services/event.service";
+import { formatNairaFromKobo } from "../../utils/currency";
 
 const reactionOptions = ["\u2764\uFE0F", "\uD83C\uDF89", "\uD83D\uDC4F", "\uD83E\uDD73"];
 const confettiPieces = [

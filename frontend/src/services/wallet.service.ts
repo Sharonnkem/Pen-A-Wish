@@ -1,6 +1,6 @@
-import { apiClient } from "@/services/api";
-import type { AdminPagination } from "@/types/admin";
-import type { AdminWithdrawal, WalletSummary, WalletTransaction } from "@/types/wallet";
+import { apiClient } from "./api";
+import type { AdminPagination } from "../types/admin";
+import type { AdminWithdrawal, WalletSummary, WalletTransaction } from "../types/wallet";
 
 export const walletService = {
   getWallet() {

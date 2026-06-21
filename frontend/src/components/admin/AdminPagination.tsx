@@ -1,6 +1,6 @@
-import type { AdminPagination as AdminPaginationMeta } from "@/types/admin";
+import type { AdminPagination as AdminPaginationMeta } from "../../types/admin";
 
-import { Button } from "@/components/common/Button";
+import { Button } from "../common/Button";
 
 type AdminPaginationProps = {
   meta: AdminPaginationMeta;

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-import { Button } from "@/components/common/Button";
-import { useToast } from "@/components/common/Toast";
-import { FormField } from "@/components/forms/FormField";
-import { Input } from "@/components/forms/Input";
-import { useAuth } from "@/context/AuthContext";
-import { ApiError } from "@/services/api";
+import { Button } from "../../components/common/Button";
+import { useToast } from "../../components/common/Toast";
+import { FormField } from "../../components/forms/FormField";
+import { Input } from "../../components/forms/Input";
+import { useAuth } from "../../context/AuthContext";
+import { ApiError } from "../../services/api";
 
 import { AuthShell } from "./AuthShell";
 

@@ -1,17 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { Card } from "@/components/cards/Card";
-import { Button } from "@/components/common/Button";
-import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
-import { useToast } from "@/components/common/Toast";
-import { FormField } from "@/components/forms/FormField";
-import { Input } from "@/components/forms/Input";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { ApiError } from "@/services/api";
-import { walletService } from "@/services/wallet.service";
-import { formatNairaFromKobo } from "@/utils/currency";
+import { Card } from "../../components/cards/Card";
+import { Button } from "../../components/common/Button";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingState } from "../../components/common/LoadingState";
+import { useToast } from "../../components/common/Toast";
+import { FormField } from "../../components/forms/FormField";
+import { Input } from "../../components/forms/Input";
+import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { ApiError } from "../../services/api";
+import { walletService } from "../../services/wallet.service";
+import { formatNairaFromKobo } from "../../utils/currency";
 
 export function WalletPage() {
   const queryClient = useQueryClient();

@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 
-import { AdminFilterBar } from "@/components/admin/AdminFilterBar";
-import { AdminLayout } from "@/components/admin/AdminLayout";
-import { AdminPagination } from "@/components/admin/AdminPagination";
-import { Card } from "@/components/cards/Card";
-import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
-import { Input } from "@/components/forms/Input";
-import { adminService } from "@/services/admin.service";
+import { AdminFilterBar } from "../../components/admin/AdminFilterBar";
+import { AdminLayout } from "../../components/admin/AdminLayout";
+import { AdminPagination } from "../../components/admin/AdminPagination";
+import { Card } from "../../components/cards/Card";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingState } from "../../components/common/LoadingState";
+import { Input } from "../../components/forms/Input";
+import { adminService } from "../../services/admin.service";
 
 export function AdminCelebrationsPage() {
   const [searchInput, setSearchInput] = useState("");
@@ -111,4 +111,5 @@ export function AdminCelebrationsPage() {
       </div>
     </AdminLayout>
   );
-}
+  
+} 

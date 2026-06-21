@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 
-import { Card } from "@/components/cards/Card";
-import { Button } from "@/components/common/Button";
-import { PublicInfoLayout } from "@/components/layout/PublicInfoLayout";
+import { Card } from "../../components/cards/Card";
+import { Button } from "../../components/common/Button";
+import { PublicInfoLayout } from "../../components/layout/PublicInfoLayout";
 
 const supportTopics = [
   "Account access and password reset help",

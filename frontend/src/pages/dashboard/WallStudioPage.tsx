@@ -2,18 +2,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import { Button } from "@/components/common/Button";
-import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
-import { Select, SelectOption } from "@/components/forms/Select";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useToast } from "@/components/common/Toast";
-import { GuestbookWallPreview } from "@/components/wall/GuestbookWallPreview";
-import { WishWallPreview } from "@/components/wall/WishWallPreview";
-import { ApiError } from "@/services/api";
-import { dashboardService } from "@/services/dashboard.service";
-import { eventService } from "@/services/event.service";
-import type { WishWallSettings } from "@/types/wish-wall";
+import { Button } from "../../components/common/Button";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingState } from "../../components/common/LoadingState";
+import { Select, SelectOption } from "../../components/forms/Select";
+import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { useToast } from "../../components/common/Toast";
+import { GuestbookWallPreview } from "../../components/wall/GuestbookWallPreview";
+import { WishWallPreview } from "../../components/wall/WishWallPreview";
+import { ApiError } from "../../services/api";
+import { dashboardService } from "../../services/dashboard.service";
+import { eventService } from "../../services/event.service";
+import type { WishWallSettings } from "../../types/wish-wall";
 
 const defaultSettings: WishWallSettings = {
   background: {
@@ -209,6 +209,19 @@ export function WallStudioPage() {
     () => (guestbookQuery.data?.data.entries ?? []).filter((entry) => !entry.isHidden),
     [guestbookQuery.data]
   );
+  const visibleWishPreviews = useMemo(
+    () =>
+      (wishesQuery.data?.data.wishes ?? [])
+        .filter((wish) => !wish.isHidden)
+        .map((wish) => ({
+          createdAt: wish.createdAt,
+          id: wish.id,
+          message: wish.message,
+          reactionCounts: [],
+          senderName: wish.senderName
+        })),
+    [wishesQuery.data]
+  );
   const wallEvent = wishesQuery.data?.data.event;
   const eventDetails = eventDetailsQuery.data?.data.event;
   const guestbookEvent = guestbookQuery.data?.data.event;
@@ -257,28 +270,6 @@ export function WallStudioPage() {
       showToast({
         title: "Memory hidden",
         description: "The guestbook note has been removed from the export view.",
-        tone: "success"
-      });
-    }
-  });
-
-  const deleteGuestbookMutation = useMutation({
-    mutationFn: (entryId: string) => dashboardService.deleteGuestbookEntry(entryId),
-    onError: (error) => {
-      showToast({
-        title: "Unable to delete memory",
-        description:
-          error instanceof ApiError
-            ? error.message
-            : "We could not delete that memory right now.",
-        tone: "error"
-      });
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["event-guestbook", id] });
-      showToast({
-        title: "Memory deleted",
-        description: "The guestbook entry was removed from the wall.",
         tone: "success"
       });
     }
@@ -414,11 +405,6 @@ export function WallStudioPage() {
       link.click();
       document.body.removeChild(link);
       window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 30_000);
-      setExportState({
-        format,
-        message: `${format} ${exportTarget} export downloaded successfully.`,
-        status: "success"
-      });
       showToast({
         title: `${format} export ready`,
         description:
@@ -427,6 +413,7 @@ export function WallStudioPage() {
             : "The branded Wish Wall file has been downloaded.",
         tone: "success"
       });
+      setExportState({ format: null, status: "idle" });
     } catch (error) {
       const message =
         error instanceof Error
@@ -521,22 +508,18 @@ export function WallStudioPage() {
         </div>
       }
     >
-      {exportState.status !== "idle" ? (
+      {exportState.status === "loading" || exportState.status === "failure" ? (
         <div
           className={`rounded-[24px] px-4 py-4 text-sm ${
-            exportState.status === "success"
-              ? "border border-emerald-200 bg-emerald-50 text-emerald-950"
-              : exportState.status === "failure"
-                ? "border border-rose-200 bg-rose-50 text-rose-950"
-                : "border border-white/70 bg-white/84 text-charcoal-900/72"
+            exportState.status === "failure"
+              ? "border border-rose-200 bg-rose-50 text-rose-950"
+              : "border border-white/70 bg-white/84 text-charcoal-900/72"
           }`}
         >
           <p className="font-semibold">
             {exportState.status === "loading"
               ? `Preparing ${exportState.format} export...`
-              : exportState.status === "success"
-                ? `${exportState.format} export complete`
-                : `${exportState.format} export failed`}
+              : `${exportState.format} export failed`}
           </p>
           {exportState.message ? <p className="mt-1">{exportState.message}</p> : null}
         </div>
@@ -1074,7 +1057,7 @@ export function WallStudioPage() {
                   hideWishMutation.isPending ? hideWishMutation.variables ?? null : null
                 }
                 settings={settings}
-                wishes={visibleWishes}
+                wishes={visibleWishPreviews}
               />
             )}
           </div>

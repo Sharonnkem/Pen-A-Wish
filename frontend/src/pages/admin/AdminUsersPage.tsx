@@ -1,15 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 
-import { AdminFilterBar } from "@/components/admin/AdminFilterBar";
-import { AdminLayout } from "@/components/admin/AdminLayout";
-import { AdminPagination } from "@/components/admin/AdminPagination";
-import { Card } from "@/components/cards/Card";
-import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
-import { Select, SelectOption } from "@/components/forms/Select";
-import { adminService } from "@/services/admin.service";
-import { formatNairaFromKobo } from "@/utils/currency";
+import { AdminFilterBar } from "../../components/admin/AdminFilterBar";
+import { AdminLayout } from "../../components/admin/AdminLayout";
+import { AdminPagination } from "../../components/admin/AdminPagination";
+import { Card } from "../../components/cards/Card";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingState } from "../../components/common/LoadingState";
+import { Select, SelectOption } from "../../components/forms/Select";
+import { adminService } from "../../services/admin.service";
+import { formatNairaFromKobo } from "../../utils/currency";
 
 export function AdminUsersPage() {
   const [searchInput, setSearchInput] = useState("");

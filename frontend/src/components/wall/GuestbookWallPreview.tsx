@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 
-import type { WishWallSettings } from "@/types/wish-wall";
-import { cn } from "@/utils/cn";
+import type { WishWallSettings } from "../../types/wish-wall";
+import { cn } from "../../utils/cn";
 
 type GuestbookWallEntry = {
   createdAt: string;
@@ -230,7 +230,6 @@ export function GuestbookWallPreview({
   const theme = themeAccents[settings.themePreset];
   const headingFont = getTypographyFont(settings.typography.headingFont);
   const bodyFont = getTypographyFont(settings.typography.bodyFont);
-  const cardTone = styleClasses[settings.cardStyle.style];
   const hasBackgroundImage = settings.background.mode === "image" && settings.background.imageUrl;
   const backgroundStyle =
     settings.background.mode === "solid"

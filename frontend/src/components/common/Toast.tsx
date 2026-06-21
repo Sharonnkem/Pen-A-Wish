@@ -8,7 +8,7 @@ import {
   type PropsWithChildren
 } from "react";
 
-import { cn } from "@/utils/cn";
+import { cn } from "../../utils/cn";
 
 type ToastTone = "success" | "error" | "info";
 

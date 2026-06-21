@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
-import { Button } from "@/components/common/Button";
-import { PublicInfoLayout } from "@/components/layout/PublicInfoLayout";
+import { Button } from "../../components/common/Button";
+import { PublicInfoLayout } from "../../components/layout/PublicInfoLayout";
 
 export function NotFoundPage() {
   return (

@@ -2,14 +2,14 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
-import { Card } from "@/components/cards/Card";
-import { Button } from "@/components/common/Button";
-import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
-import { Input } from "@/components/forms/Input";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { walletService } from "@/services/wallet.service";
-import { formatNairaFromKobo } from "@/utils/currency";
+import { Card } from "../../components/cards/Card";
+import { Button } from "../../components/common/Button";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingState } from "../../components/common/LoadingState";
+import { Input } from "../../components/forms/Input";
+import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { walletService } from "../../services/wallet.service";
+import { formatNairaFromKobo } from "../../utils/currency";
 
 export function TransactionHistoryPage() {
   const navigate = useNavigate();

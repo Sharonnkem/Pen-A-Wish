@@ -1,8 +1,6 @@
-import { motion } from "framer-motion";
-
-import type { PublicWishPreview } from "@/types/event";
-import type { WishWallSettings } from "@/types/wish-wall";
-import { cn } from "@/utils/cn";
+import type { PublicWishPreview } from "../../types/event";
+import type { WishWallSettings } from "../../types/wish-wall";
+import { cn } from "../../utils/cn";
 
 type WishWallPreviewProps = {
   celebrantName: string;

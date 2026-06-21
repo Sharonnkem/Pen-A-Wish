@@ -2,17 +2,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Card } from "@/components/cards/Card";
-import { Button } from "@/components/common/Button";
-import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
-import { useToast } from "@/components/common/Toast";
-import { FormField } from "@/components/forms/FormField";
-import { Input } from "@/components/forms/Input";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { ApiError } from "@/services/api";
-import { walletService } from "@/services/wallet.service";
-import { formatNairaFromKobo } from "@/utils/currency";
+import { Card } from "../../components/cards/Card";
+import { Button } from "../../components/common/Button";
+import { EmptyState } from "../../components/common/EmptyState";
+import { LoadingState } from "../../components/common/LoadingState";
+import { useToast } from "../../components/common/Toast";
+import { FormField } from "../../components/forms/FormField";
+import { Input } from "../../components/forms/Input";
+import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { ApiError } from "../../services/api";
+import { walletService } from "../../services/wallet.service";
+import { formatNairaFromKobo } from "../../utils/currency";
 
 export function WithdrawalRequestPage() {
   const navigate = useNavigate();

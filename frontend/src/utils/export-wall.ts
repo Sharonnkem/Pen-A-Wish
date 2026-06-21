@@ -1,8 +1,6 @@
-import type { WishWallSettings } from "@/types/wish-wall";
-import { appConfig } from "@/config/app";
+import { appConfig } from "../config/app";
+import type { WishWallSettings } from "../types/wish-wall";
 
-const XMLNS = "http://www.w3.org/2000/svg";
-const XHTMLNS = "http://www.w3.org/1999/xhtml";
 const textEncoder = new TextEncoder();
 type PdfPart = string | Uint8Array<ArrayBuffer>;
 
@@ -148,10 +146,6 @@ function roundRect(
   context.closePath();
 }
 
-function getAbsoluteUrl(url: string) {
-  return new URL(url, window.location.href).toString();
-}
-
 async function loadImageDataUrl(url: string) {
   const tryFetchImage = async (imageUrl: string) => {
     const response = await fetch(imageUrl, { mode: "cors" });
@@ -182,46 +176,6 @@ async function loadImageDataUrl(url: string) {
     reader.onerror = () => reject(new Error("Unable to read the selected background image."));
     reader.readAsDataURL(blob);
   });
-}
-
-async function inlineCssBackgroundImage(
-  backgroundImage: string,
-  cache: Map<string, string>
-) {
-  if (!backgroundImage.includes("url(")) {
-    return backgroundImage;
-  }
-
-  const urlPattern = /url\((['"]?)(.*?)\1\)/g;
-  let lastIndex = 0;
-  let resolved = "";
-  let match: RegExpExecArray | null;
-
-  while ((match = urlPattern.exec(backgroundImage))) {
-    resolved += backgroundImage.slice(lastIndex, match.index);
-    const rawUrl = match[2]?.trim() ?? "";
-
-    if (!rawUrl || rawUrl.startsWith("data:")) {
-      resolved += match[0];
-      lastIndex = match.index + match[0].length;
-      continue;
-    }
-
-    const absoluteUrl = getAbsoluteUrl(rawUrl);
-    let dataUrl = cache.get(absoluteUrl);
-
-    if (!dataUrl) {
-      dataUrl = await loadImageDataUrl(absoluteUrl);
-      cache.set(absoluteUrl, dataUrl);
-    }
-
-    resolved += `url("${dataUrl}")`;
-    lastIndex = match.index + match[0].length;
-  }
-
-  resolved += backgroundImage.slice(lastIndex);
-
-  return resolved;
 }
 
 function dataUrlToUint8Array(dataUrl: string) {
@@ -309,162 +263,6 @@ function buildPdfFromJpeg(jpegDataUrl: string, width: number, height: number) {
   append(`startxref\n${xrefOffset}\n%%EOF`);
 
   return new Blob(parts, { type: "application/pdf" });
-}
-
-async function copyComputedStyles(
-  source: Element,
-  target: Element,
-  cache: Map<string, string>
-) {
-  const computedStyle = window.getComputedStyle(source);
-  const targetElement = target as HTMLElement;
-
-  targetElement.style.cssText = Array.from(computedStyle).reduce((cssText, property) => {
-    return `${cssText}${property}:${computedStyle.getPropertyValue(property)};`;
-  }, "");
-
-  if (computedStyle.backgroundImage && computedStyle.backgroundImage !== "none") {
-    try {
-      targetElement.style.backgroundImage = await inlineCssBackgroundImage(
-        computedStyle.backgroundImage,
-        cache
-      );
-    } catch {
-      // Keep the computed background if the asset cannot be inlined.
-    }
-  }
-
-  if (source instanceof HTMLImageElement && target instanceof HTMLImageElement) {
-    const sourceUrl = source.currentSrc || source.src;
-
-    if (sourceUrl) {
-      try {
-        const absoluteUrl = sourceUrl.startsWith("data:") ? sourceUrl : getAbsoluteUrl(sourceUrl);
-
-        if (absoluteUrl.startsWith("data:")) {
-          target.src = absoluteUrl;
-        } else {
-          let dataUrl = cache.get(absoluteUrl);
-
-          if (!dataUrl) {
-            dataUrl = await loadImageDataUrl(absoluteUrl);
-            cache.set(absoluteUrl, dataUrl);
-          }
-
-          target.src = dataUrl;
-        }
-      } catch {
-        target.src = sourceUrl;
-        target.crossOrigin = "anonymous";
-      }
-    }
-  }
-
-  if (source instanceof HTMLCanvasElement && target instanceof HTMLImageElement) {
-    target.src = source.toDataURL("image/png");
-  }
-
-  if (source instanceof HTMLTextAreaElement && target instanceof HTMLTextAreaElement) {
-    target.value = source.value;
-    target.textContent = source.value;
-  }
-
-  if (source instanceof HTMLInputElement && target instanceof HTMLInputElement) {
-    target.value = source.value;
-    target.setAttribute("value", source.value);
-  }
-}
-
-async function cloneNodeWithInlineStyles(node: HTMLElement) {
-  const clone = node.cloneNode(true) as HTMLElement;
-  const sourceNodes = [node, ...Array.from(node.querySelectorAll("*"))];
-  const cloneNodes = [clone, ...Array.from(clone.querySelectorAll("*"))];
-  const assetCache = new Map<string, string>();
-
-  for (const [index, sourceNode] of sourceNodes.entries()) {
-    const targetNode = cloneNodes[index];
-
-    if (!targetNode) {
-      continue;
-    }
-
-    await copyComputedStyles(sourceNode, targetNode, assetCache);
-  }
-
-  clone.style.margin = "0";
-  clone.style.transform = "none";
-  clone.style.maxWidth = "none";
-  clone.style.width = `${node.scrollWidth}px`;
-  clone.style.minHeight = `${node.scrollHeight}px`;
-
-  return clone;
-}
-
-async function renderElementToCanvas(element: HTMLElement) {
-  const cloned = await cloneNodeWithInlineStyles(element);
-  const width = Math.ceil(element.scrollWidth);
-  const height = Math.ceil(element.scrollHeight);
-  const wrapper = document.createElementNS(XHTMLNS, "div");
-  wrapper.setAttribute("xmlns", XHTMLNS);
-  wrapper.style.width = `${width}px`;
-  wrapper.style.minHeight = `${height}px`;
-  wrapper.appendChild(cloned);
-  const serialized = new XMLSerializer().serializeToString(wrapper);
-  const svg = `
-    <svg xmlns="${XMLNS}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <foreignObject width="100%" height="100%">${serialized}</foreignObject>
-    </svg>
-  `;
-  const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-
-  try {
-    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const nextImage = new Image();
-      nextImage.onload = () => resolve(nextImage);
-      nextImage.onerror = () => reject(new Error("Unable to render the wall for export."));
-      nextImage.src = url;
-    });
-
-    const canvas = document.createElement("canvas");
-    const scale = Math.min(2, window.devicePixelRatio || 1.5);
-    canvas.width = Math.round(width * scale);
-    canvas.height = Math.round(height * scale);
-
-    const context = canvas.getContext("2d");
-
-    if (!context) {
-      throw new Error("Canvas rendering is not available in this browser.");
-    }
-
-    context.scale(scale, scale);
-    context.fillStyle = "#fffaf4";
-    context.fillRect(0, 0, width, height);
-    context.drawImage(image, 0, 0, width, height);
-
-    return {
-      canvas,
-      height,
-      width
-    };
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-}
-
-function isCanvasExportable(canvas: HTMLCanvasElement) {
-  const context = canvas.getContext("2d");
-
-  if (!context) {
-    return false;
-  }
-
-  try {
-    context.getImageData(0, 0, 1, 1);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 async function renderFallbackWishWallToCanvas(
@@ -665,15 +463,12 @@ async function createWallCanvas(
   return await renderFallbackWishWallToCanvas(fallbackData, settings);
 }
 
-export async function exportWall(
-  element: HTMLElement,
-  input: {
+export async function exportWall(input: {
     eventTitle: string;
     format: "JPG" | "PDF" | "PNG";
     fallbackData?: WishWallExportData;
     settings?: WishWallSettings;
-  }
-) {
+}) {
   const safeTitle = sanitizeFilenamePart(input.eventTitle || "wish-wall");
   const fileBaseName = `${safeTitle || "wish-wall"}-${input.format.toLowerCase()}`;
   const { canvas, height, width } = await createWallCanvas(input.fallbackData, input.settings);
