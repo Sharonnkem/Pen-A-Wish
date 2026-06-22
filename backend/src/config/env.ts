@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import path from "node:path";
 
 dotenv.config();
 
@@ -28,6 +29,15 @@ const frontendOrigins = parseOrigins(
 );
 const primaryFrontendUrl =
   frontendOrigins.find((origin) => !isLocalOrigin(origin)) ?? frontendOrigins[0];
+
+const shouldInstallPlaywright =
+  process.env.PLAYWRIGHT_INSTALL_CHROMIUM === "true" ||
+  process.env.CI === "true" ||
+  process.env.RENDER === "true";
+
+if (shouldInstallPlaywright && !process.env.PLAYWRIGHT_BROWSERS_PATH) {
+  process.env.PLAYWRIGHT_BROWSERS_PATH = path.resolve(process.cwd(), ".playwright-browsers");
+}
 
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
