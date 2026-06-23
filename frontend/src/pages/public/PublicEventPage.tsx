@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { PageTransition } from "../../components/animations/PageTransition";
 import { Card } from "../../components/cards/Card";
@@ -148,6 +148,7 @@ function EmojiReactionBurst({
 
 export function PublicEventPage() {
   const { slug = "" } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -587,6 +588,13 @@ export function PublicEventPage() {
               onClick={() => setIsGuestbookModalOpen(true)}
             >
               Guestbook
+            </Button>
+            <Button
+              variant="secondary"
+              className="bg-white/82"
+              onClick={() => navigate("/")}
+            >
+              Create your page
             </Button>
           </>
         }

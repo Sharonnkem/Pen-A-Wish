@@ -9,7 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 const heroWishes = [
   {
     author: "From Muma",
-    className: "left-[-1%] top-12 block sm:left-0 sm:top-16 lg:left-0 lg:top-18",
+    className: "left-[-1%] top-12 block sm:left-0 sm:top-16 lg:left-0 lg:top-12",
     color: "bg-white/92",
     message: "May this year hold everything you've prayed for.",
     rotate: "-rotate-[8deg]",
@@ -17,7 +17,7 @@ const heroWishes = [
   },
   {
     author: "From Tessa",
-    className: "right-[-1%] top-12 block sm:right-0 sm:top-16 lg:right-0 lg:top-18",
+    className: "right-[-1%] top-12 block sm:right-0 sm:top-16 lg:right-0 lg:top-12",
     color: "bg-white/92",
     message: "So proud of who you've become. Truly deserved.",
     rotate: "rotate-[9deg]",
@@ -25,15 +25,15 @@ const heroWishes = [
   },
   {
     author: "From Mum",
-    className: "left-1/2 top-10 -translate-x-1/2 sm:top-12 lg:top-12",
+    className: "left-1/2 top-10 -translate-x-1/2 sm:top-12 lg:top-9",
     color: "bg-white/96",
-    message: "Every wish, written down, becomes something you can keep forever.",
+    message: "Every wish becomes a keepsake.",
     rotate: "rotate-0",
     size: "h-[9rem] w-[8rem] sm:h-44 sm:w-40 lg:h-48 lg:w-44"
   },
   {
     author: "From the team",
-    className: "left-[-1%] bottom-10 block sm:left-0 sm:bottom-12 lg:left-0 lg:bottom-14",
+    className: "left-[-1%] bottom-10 block sm:left-0 sm:bottom-12 lg:left-0 lg:bottom-12",
     color: "bg-white/92",
     message: "Cheers to the next chapter and everything that follows.",
     rotate: "rotate-[8deg]",
@@ -41,28 +41,12 @@ const heroWishes = [
   },
   {
     author: "From Deli",
-    className: "right-[-1%] bottom-10 block sm:right-0 sm:bottom-12 lg:right-0 lg:bottom-14",
+    className: "right-[-1%] bottom-10 block sm:right-0 sm:bottom-12 lg:right-0 lg:bottom-12",
     color: "bg-white/92",
     message: "Forever grateful for you, your kindness, and your light.",
     rotate: "-rotate-[8deg]",
     size: "h-[8.5rem] w-[7.5rem] sm:h-40 sm:w-36 lg:h-44 lg:w-40"
   },
-  {
-    author: "From Auntie",
-    className: "left-[5%] top-[44%] hidden xl:block",
-    color: "bg-white/90",
-    message: "A wish like this deserves to be kept long after today.",
-    rotate: "rotate-[6deg]",
-    size: "h-40 w-36"
-  },
-  {
-    author: "From Uncle",
-    className: "right-[5%] top-[44%] hidden xl:block",
-    color: "bg-cream-50/95",
-    message: "May every new year bring even more joy than the last.",
-    rotate: "-rotate-[6deg]",
-    size: "h-40 w-36"
-  }
 ];
 
 const glimpseNotes = [
@@ -146,7 +130,7 @@ export function LandingPage() {
   return (
     <PageTransition>
       <main className="overflow-hidden">
-        <section className="relative px-4 pb-12 pt-24 sm:px-6 lg:px-8 lg:pt-28">
+        <section className="relative px-4 pb-12 pt-24 sm:px-6 lg:px-8 lg:pb-12 lg:pt-28">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-[52rem] bg-[radial-gradient(circle_at_top_left,rgba(247,217,220,0.55),transparent_34%),radial-gradient(circle_at_top_right,rgba(213,162,76,0.18),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.95)_0%,rgba(255,250,244,0.94)_100%)]" />
           <div className="mx-auto max-w-7xl">
             <motion.div
@@ -273,9 +257,9 @@ export function LandingPage() {
               </div>
             ) : null}
 
-            <div className="relative z-10 mt-0 overflow-hidden rounded-[42px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,250,244,0.99)_0%,rgba(255,246,238,0.97)_100%)] px-4 pb-10 pt-0 shadow-[0_24px_80px_rgba(67,34,53,0.1)] sm:px-6 sm:pb-12 lg:px-8 lg:pb-14">
+            <div className="relative z-10 mt-0 overflow-hidden rounded-[42px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,250,244,0.99)_0%,rgba(255,246,238,0.97)_100%)] px-4 pt-0 shadow-[0_24px_80px_rgba(67,34,53,0.1)] sm:px-6 lg:px-8">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.82),transparent_30%),radial-gradient(circle_at_top_right,rgba(247,217,220,0.42),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(213,162,76,0.12),transparent_26%)]" />
-              <div className="relative min-h-[40rem] sm:min-h-[44rem] lg:min-h-[48rem]">
+              <div className="relative min-h-[40rem] sm:min-h-[44rem] lg:min-h-[40rem]">
                 {heroWishes.map((wish, index) => (
                   <motion.article
                     key={wish.author}
@@ -317,27 +301,15 @@ export function LandingPage() {
                     A keepsake for every celebration
                   </p>
                   <h1 className="mt-5 max-w-4xl font-display text-[2.35rem] leading-[0.98] text-charcoal-900 sm:text-[3.45rem] lg:text-[4.45rem]">
-                    Every wish, written down.
-                    <span className="block italic text-plum-700">Kept forever.</span>
+                    Every wish, kept forever.
                   </h1>
                   <p className="mt-5 max-w-2xl text-[0.88rem] leading-7 text-charcoal-900/66 sm:text-[1rem] sm:leading-8">
-                    Pen A Wish turns scattered messages from the people who love you into one beautiful, lasting keepsake.
+                    Pen A Wish gathers messages, memories, and gifts in one lasting wall.
                   </p>
 
                   <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                     <Button size="lg" onClick={() => navigate(primaryHref)}>
-                      Create your wall
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="lg"
-                      onClick={() => {
-                        document
-                          .getElementById("how-it-works")
-                          ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }}
-                    >
-                      See a sample wall
+                      Create an Event
                     </Button>
                   </div>
                 </motion.div>

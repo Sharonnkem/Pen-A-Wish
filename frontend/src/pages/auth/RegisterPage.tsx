@@ -48,7 +48,7 @@ export function RegisterPage() {
   return (
     <AuthShell
       eyebrow="Register"
-      title="Create your Pen A Wish account"
+      title="One step closer to launching your event online"
       subtitle="Start building celebration pages that gather wishes, memories, and gifts in one warm place."
     >
       <form className="mt-2 space-y-5" onSubmit={handleSubmit}>
