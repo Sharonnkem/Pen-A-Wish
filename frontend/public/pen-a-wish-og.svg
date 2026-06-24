@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF7EF"/>
+      <stop offset="1" stop-color="#F3E4D3"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(600 315) rotate(90) scale(260 500)">
+      <stop stop-color="#F7D9C0" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#F7D9C0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="70" y="70" width="1060" height="490" rx="52" fill="url(#glow)"/>
+  <circle cx="600" cy="240" r="92" fill="#FFFFFF" fill-opacity="0.86"/>
+  <path d="M555 240c0-24 20-44 45-44h0c25 0 45 20 45 44 0 24-20 44-45 44h-23l-21 18v-18h-1c-25 0-45-20-45-44Z" fill="#5C2947"/>
+  <path d="M611 214c-2-12-15-20-28-20-16 0-29 12-29 28 0 23 28 40 57 57 29-17 57-34 57-57 0-16-13-28-29-28-13 0-26 8-28 20Z" fill="#C46B84"/>
+  <text x="600" y="378" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-size="72" font-weight="600" fill="#432235">Pen A Wish</text>
+  <text x="600" y="430" text-anchor="middle" font-family="Jost, Arial, sans-serif" font-size="30" font-weight="400" fill="#6C4B57">Beautiful wish walls, memories, and gifts</text>
+</svg>

@@ -17,6 +17,7 @@ import { Modal } from "../../components/modals/Modal";
 import { ApiError } from "../../services/api";
 import { eventService } from "../../services/event.service";
 import { formatNairaFromKobo } from "../../utils/currency";
+import { getCelebrationPreviewImageUrl } from "../../utils/share";
 
 const reactionOptions = ["\u2764\uFE0F", "\uD83C\uDF89", "\uD83D\uDC4F", "\uD83E\uDD73"];
 const confettiPieces = [
@@ -239,7 +240,7 @@ export function PublicEventPage() {
     const description =
       event.description ??
       `Leave wishes and memories for ${event.celebrantName}'s ${event.eventType.toLowerCase()} celebration.`;
-    const imageUrl = event.profileImageUrl ?? event.coverImageUrl ?? "";
+    const imageUrl = getCelebrationPreviewImageUrl(event.profileImageUrl, event.coverImageUrl);
     const pageUrl =
       typeof window === "undefined" ? `/events/${event.slug}` : window.location.href;
 

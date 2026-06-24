@@ -12,9 +12,7 @@ import {
   buildCelebrationShareMessage,
   getPublicEventUrl
 } from "../../utils/share";
-
-const fallbackImage =
-  "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='320' viewBox='0 0 480 320'%3E%3Crect width='480' height='320' fill='%23f8eee4'/%3E%3Crect x='32' y='32' width='416' height='256' rx='28' fill='%23ffffff'/%3E%3Ctext x='240' y='145' text-anchor='middle' font-family='Georgia, serif' font-size='32' fill='%23432235'%3EPen A Wish%3C/text%3E%3Ctext x='240' y='190' text-anchor='middle' font-family='Arial, sans-serif' font-size='16' fill='%235f324a'%3ECelebration details%3C/text%3E%3C/svg%3E";
+import { getCelebrationPreviewImageUrl } from "../../utils/share";
 
 export function CelebrationDetailsPage() {
   const { id = "" } = useParams();
@@ -123,7 +121,7 @@ export function CelebrationDetailsPage() {
               <img
                 alt={`${event.celebrantName} profile`}
                 className="h-36 w-full rounded-[26px] object-cover shadow-card"
-                src={event.profileImageUrl || event.coverImageUrl || fallbackImage}
+                src={getCelebrationPreviewImageUrl(event.profileImageUrl, event.coverImageUrl)}
               />
               <p className="text-sm font-medium text-charcoal-900">{event.celebrantName}</p>
             </div>

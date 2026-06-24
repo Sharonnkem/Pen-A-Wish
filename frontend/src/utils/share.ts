@@ -13,6 +13,21 @@ export function getPublicEventUrl(slug: string) {
   return `${window.location.origin}/events/${slug}`;
 }
 
+export function getDefaultSharePreviewImageUrl() {
+  if (typeof window === "undefined") {
+    return "/pen-a-wish-og.svg";
+  }
+
+  return `${window.location.origin}/pen-a-wish-og.svg`;
+}
+
+export function getCelebrationPreviewImageUrl(
+  profileImageUrl?: string | null,
+  coverImageUrl?: string | null
+) {
+  return profileImageUrl ?? coverImageUrl ?? getDefaultSharePreviewImageUrl();
+}
+
 export function buildCelebrationShareMessage({
   celebrantName,
   eventType,

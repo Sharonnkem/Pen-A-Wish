@@ -7,6 +7,7 @@ import { useToast } from "../common/Toast";
 import type { CelebrationEvent } from "../../types/event";
 import {
   buildCelebrationShareMessage,
+  getCelebrationPreviewImageUrl,
   getPublicEventUrl
 } from "../../utils/share";
 
@@ -22,14 +23,6 @@ export function CelebrationCard({
   onGenerateWall
 }: CelebrationCardProps) {
   const { showToast } = useToast();
-  const fallbackImage = useMemo(
-    () =>
-      `data:image/svg+xml;utf8,${encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="320" viewBox="0 0 600 320"><rect width="600" height="320" fill="#f8eee4"/><rect x="36" y="36" width="528" height="248" rx="32" fill="#ffffff"/><text x="300" y="145" text-anchor="middle" font-family="Georgia, serif" font-size="34" fill="#432235">Pen A Wish</text><text x="300" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#5f324a">Celebration preview</text></svg>`
-      )}`,
-    []
-  );
-
   const publicShareUrl = useMemo(() => getPublicEventUrl(event.slug), [event.slug]);
   const shareMessage = useMemo(
     () =>
@@ -135,7 +128,7 @@ export function CelebrationCard({
           <img
             alt={`${event.celebrantName} profile`}
             className="h-24 w-24 rounded-[24px] object-cover shadow-[0_12px_30px_rgba(67,34,53,0.12)]"
-            src={event.profileImageUrl || event.coverImageUrl || fallbackImage}
+            src={getCelebrationPreviewImageUrl(event.profileImageUrl, event.coverImageUrl)}
           />
           <p className="text-sm font-medium text-charcoal-900">{event.celebrantName}</p>
         </div>
@@ -144,7 +137,7 @@ export function CelebrationCard({
           <img
             alt={`${event.title} cover`}
             className="h-44 w-full object-cover"
-            src={event.coverImageUrl || event.profileImageUrl || fallbackImage}
+            src={getCelebrationPreviewImageUrl(event.profileImageUrl, event.coverImageUrl)}
           />
         </div>
       </div>
