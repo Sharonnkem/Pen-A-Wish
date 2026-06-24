@@ -1,0 +1,2 @@
+ALTER TABLE events
+ADD COLUMN IF NOT EXISTS show_public_recent_wishes BOOLEAN NOT NULL DEFAULT FALSE;

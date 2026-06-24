@@ -31,7 +31,7 @@ export const defaultWishWallSettings: WishWallSettings = {
   },
   layout: {
     columns: 3,
-    mode: "masonry"
+    mode: "collageScrapbook"
   },
   themePreset: "paper",
   typography: {

@@ -5,6 +5,10 @@ import { Card } from "./Card";
 import { Button } from "../common/Button";
 import { useToast } from "../common/Toast";
 import type { CelebrationEvent } from "../../types/event";
+import {
+  buildCelebrationShareMessage,
+  getPublicEventUrl
+} from "../../utils/share";
 
 type CelebrationCardProps = {
   event: CelebrationEvent;
@@ -26,20 +30,23 @@ export function CelebrationCard({
     []
   );
 
-  const publicShareUrl = useMemo(() => {
-    if (typeof window === "undefined") {
-      return event.shareLink;
-    }
-
-    return `${window.location.origin}/events/${event.slug}`;
-  }, [event.shareLink, event.slug]);
-
+  const publicShareUrl = useMemo(() => getPublicEventUrl(event.slug), [event.slug]);
+  const shareMessage = useMemo(
+    () =>
+      buildCelebrationShareMessage({
+        celebrantName: event.celebrantName,
+        eventType: event.eventType,
+        publicUrl: publicShareUrl,
+        title: event.title
+      }),
+    [event.celebrantName, event.eventType, event.title, publicShareUrl]
+  );
   async function handleCopyShareLink() {
     try {
-      await navigator.clipboard.writeText(publicShareUrl);
+      await navigator.clipboard.writeText(shareMessage);
     } catch {
       const textarea = document.createElement("textarea");
-      textarea.value = publicShareUrl;
+      textarea.value = shareMessage;
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand("copy");
@@ -47,8 +54,8 @@ export function CelebrationCard({
     }
 
     showToast({
-      title: "Share link copied",
-      description: "You can now paste the public celebration link anywhere you like.",
+      title: "Invite copied",
+      description: "You can now paste the full celebration invite anywhere you like.",
       tone: "success"
     });
   }
@@ -56,7 +63,7 @@ export function CelebrationCard({
   async function handleNativeShare() {
     if (navigator.share) {
       await navigator.share({
-        text: `Join this celebration for ${event.celebrantName}`,
+        text: shareMessage,
         title: event.title,
         url: publicShareUrl
       });
@@ -101,14 +108,14 @@ export function CelebrationCard({
                 <Button variant="secondary">Edit</Button>
               </Link>
               <Button variant="ghost" onClick={handleCopyShareLink}>
-                Copy link
+                Copy invite
               </Button>
               <Button variant="ghost" onClick={handleNativeShare}>
                 Share
               </Button>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="flex flex-wrap gap-2">
               <Button variant="ghost" size="sm" onClick={() => onGenerateWall(event.id)}>
                 Generate wall
               </Button>

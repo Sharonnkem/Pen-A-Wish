@@ -32,7 +32,7 @@ export async function createWishForEvent(input: {
   return result.rows[0];
 }
 
-export async function getRecentVisibleWishesByEventId(eventId: string, limit = 4) {
+export async function getRecentVisibleWishesByEventId(eventId: string, limit = 20) {
   const result = await query<PublicWishPreviewRecord>(
     `SELECT id, event_id, sender_name, message, created_at
      FROM wishes
@@ -86,7 +86,7 @@ export async function createGuestbookEntryForEvent(input: {
   return result.rows[0];
 }
 
-export async function getRecentVisibleGuestbookEntriesByEventId(eventId: string, limit = 4) {
+export async function getRecentVisibleGuestbookEntriesByEventId(eventId: string, limit = 20) {
   const result = await query<GuestbookEntryRecord>(
     `SELECT id, event_id, sender_name, sender_email, message, is_hidden, created_at
      FROM guestbook_entries

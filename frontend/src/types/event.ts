@@ -9,6 +9,8 @@ export type CelebrationEvent = {
   id: string;
   isPublic: boolean;
   profileImageUrl: string | null;
+  showPublicRecentGuestbook: boolean;
+  showPublicRecentWishes: boolean;
   shareLink: string;
   slug: string;
   title: string;
@@ -26,6 +28,8 @@ export type PublicCelebrationEvent = Pick<
   | "eventType"
   | "id"
   | "profileImageUrl"
+  | "showPublicRecentGuestbook"
+  | "showPublicRecentWishes"
   | "slug"
   | "title"
 >;
@@ -67,5 +71,7 @@ export type CreateEventInput = {
   eventDate: string;
   eventType: string;
   profileImageUrl?: string | null;
+  showPublicRecentGuestbook: boolean;
+  showPublicRecentWishes: boolean;
   title: string;
 };

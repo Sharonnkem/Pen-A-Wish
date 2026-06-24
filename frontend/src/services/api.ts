@@ -1,5 +1,10 @@
 import { appConfig } from "../config/app";
-import { getAccessToken } from "./token-storage";
+import {
+  getAccessToken,
+  setAccessToken,
+  setStoredUser
+} from "./token-storage";
+import type { AuthResponse } from "../types/auth";
 
 export class ApiError extends Error {
   public readonly errors: string[];
@@ -44,6 +49,35 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     body: requestBody
   });
 
+  if (response.status === 401 && !path.startsWith("/auth/")) {
+    const refreshed = await refreshSession();
+
+    if (refreshed) {
+      headers.set("Authorization", `Bearer ${refreshed.accessToken}`);
+
+      const retryResponse = await fetch(`${appConfig.apiBaseUrl}${path}`, {
+        ...requestInit,
+        credentials: "include",
+        headers,
+        body: requestBody
+      });
+
+      const retryPayload = (await retryResponse.json().catch(() => null)) as
+        | { errors?: string[]; message?: string }
+        | null;
+
+      if (!retryResponse.ok) {
+        throw new ApiError(
+          retryPayload?.message ?? "Request failed",
+          retryResponse.status,
+          retryPayload?.errors ?? []
+        );
+      }
+
+      return retryPayload as T;
+    }
+  }
+
   const payload = (await response.json().catch(() => null)) as
     | { errors?: string[]; message?: string }
     | null;
@@ -57,6 +91,24 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   return payload as T;
+}
+
+async function refreshSession(): Promise<AuthResponse["data"] | null> {
+  const response = await fetch(`${appConfig.apiBaseUrl}/auth/refresh-token`, {
+    credentials: "include",
+    method: "POST"
+  });
+
+  const payload = (await response.json().catch(() => null)) as AuthResponse | null;
+
+  if (!response.ok || !payload?.data) {
+    return null;
+  }
+
+  setAccessToken(payload.data.accessToken);
+  setStoredUser(payload.data.user);
+
+  return payload.data;
 }
 
 export const apiClient = {

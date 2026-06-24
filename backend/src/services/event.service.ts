@@ -30,6 +30,8 @@ function mapEvent(event: EventRecord) {
     id: event.id,
     isPublic: event.is_public,
     profileImageUrl: event.profile_image_url,
+    showPublicRecentGuestbook: event.show_public_recent_guestbook,
+    showPublicRecentWishes: event.show_public_recent_wishes,
     shareLink: `/events/${event.slug}`,
     slug: event.slug,
     title: event.title,
@@ -67,6 +69,8 @@ export const eventService = {
       eventDate: string;
       eventType: string;
       profileImageUrl?: string | null;
+      showPublicRecentGuestbook?: boolean;
+      showPublicRecentWishes?: boolean;
       title: string;
     }
   ) {
@@ -114,6 +118,8 @@ export const eventService = {
       eventDate: string;
       eventType: string;
       profileImageUrl?: string | null;
+      showPublicRecentGuestbook?: boolean;
+      showPublicRecentWishes?: boolean;
       title: string;
     }
   ) {
@@ -159,8 +165,8 @@ export const eventService = {
 
     const stats = await getPublicEventStats(event.id);
     const [recentGuestbookEntries, recentWishes] = await Promise.all([
-      getRecentVisibleGuestbookEntriesByEventId(event.id, 4),
-      getRecentVisibleWishesByEventId(event.id, 4)
+      getRecentVisibleGuestbookEntriesByEventId(event.id, 20),
+      getRecentVisibleWishesByEventId(event.id, 20)
     ]);
     const wishReactionCounts = await getReactionCountsForWishIds(
       recentWishes.map((wish) => wish.id)
@@ -185,6 +191,8 @@ export const eventService = {
         eventType: event.event_type,
         id: event.id,
         profileImageUrl: event.profile_image_url,
+        showPublicRecentGuestbook: event.show_public_recent_guestbook,
+        showPublicRecentWishes: event.show_public_recent_wishes,
         slug: event.slug,
         title: event.title
       },
@@ -241,6 +249,8 @@ export const eventService = {
         eventType: event.event_type,
         id: event.id,
         profileImageUrl: event.profile_image_url,
+        showPublicRecentGuestbook: event.show_public_recent_guestbook,
+        showPublicRecentWishes: event.show_public_recent_wishes,
         slug: event.slug,
         title: event.title
       },

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { PageTransition } from "../../components/animations/PageTransition";
@@ -29,6 +29,8 @@ const confettiPieces = [
   { color: "bg-rose-200", delay: 0.24, driftX: -16, left: "73%", rotate: -18, y: -84 },
   { color: "bg-cream-100", delay: 0.28, driftX: 14, left: "84%", rotate: 14, y: -58 }
 ] as const;
+
+const WISH_MESSAGE_LIMIT = 280;
 
 type PublicEventQueryData = Awaited<ReturnType<typeof eventService.getPublicEventBySlug>>;
 type ReactionBurstState =
@@ -152,25 +154,29 @@ export function PublicEventPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const recentWishesSectionRef = useRef<HTMLDivElement | null>(null);
   const [giftForm, setGiftForm] = useState({
     amountNaira: "",
     message: "",
-    senderEmail: "",
     senderName: ""
   });
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [isGuestbookModalOpen, setIsGuestbookModalOpen] = useState(false);
+  const [isGuestbookSuccessModalOpen, setIsGuestbookSuccessModalOpen] = useState(false);
   const [guestbookCelebrationTick, setGuestbookCelebrationTick] = useState(0);
   const [reactionBurst, setReactionBurst] = useState<ReactionBurstState>(null);
   const [wishCelebrationTick, setWishCelebrationTick] = useState(0);
+  const [isWishSuccessModalOpen, setIsWishSuccessModalOpen] = useState(false);
+    const [showRecentWishesPreview, setShowRecentWishesPreview] = useState(false);
+    const [showRecentGuestbookPreview, setShowRecentGuestbookPreview] = useState(false);
+  const [recentWishesPage, setRecentWishesPage] = useState(1);
+  const [recentGuestbookPage, setRecentGuestbookPage] = useState(1);
   const [guestbookForm, setGuestbookForm] = useState({
     message: "",
-    senderEmail: "",
     senderName: ""
   });
   const [wishForm, setWishForm] = useState({
     message: "",
-    senderEmail: "",
     senderName: ""
   });
 
@@ -222,12 +228,83 @@ export function PublicEventPage() {
     queryKey: ["public-event-reactions", slug]
   });
 
+  useEffect(() => {
+    const event = eventQuery.data?.data.event;
+
+    if (!event || typeof document === "undefined") {
+      return;
+    }
+
+    const pageTitle = `${event.title} | Pen A Wish`;
+    const description =
+      event.description ??
+      `Leave wishes and memories for ${event.celebrantName}'s ${event.eventType.toLowerCase()} celebration.`;
+    const imageUrl = event.coverImageUrl ?? event.profileImageUrl ?? "";
+    const pageUrl =
+      typeof window === "undefined" ? `/events/${event.slug}` : window.location.href;
+
+    const previousTitle = document.title;
+    document.title = pageTitle;
+
+    const updateMeta = (selector: string, attr: "content" | "href", value: string) => {
+      let tag = document.head.querySelector<HTMLMetaElement | HTMLLinkElement>(selector);
+
+      if (!tag) {
+        tag = selector.startsWith("link")
+          ? document.createElement("link")
+          : document.createElement("meta");
+        if (selector.startsWith('meta[property="')) {
+          const property = selector.match(/meta\[property="([^"]+)"\]/)?.[1];
+          if (property) {
+            (tag as HTMLMetaElement).setAttribute("property", property);
+          }
+        } else if (selector.startsWith('meta[name="')) {
+          const name = selector.match(/meta\[name="([^"]+)"\]/)?.[1];
+          if (name) {
+            (tag as HTMLMetaElement).setAttribute("name", name);
+          }
+        } else if (selector.startsWith('link[rel="')) {
+          const rel = selector.match(/link\[rel="([^"]+)"\]/)?.[1];
+          if (rel) {
+            (tag as HTMLLinkElement).setAttribute("rel", rel);
+          }
+        }
+        document.head.appendChild(tag);
+      }
+
+      tag.setAttribute(attr, value);
+    };
+
+    updateMeta('meta[name="description"]', "content", description);
+    updateMeta('meta[property="og:title"]', "content", pageTitle);
+    updateMeta('meta[property="og:description"]', "content", description);
+    updateMeta('meta[property="og:type"]', "content", "article");
+    updateMeta('meta[property="og:url"]', "content", pageUrl);
+    updateMeta('meta[property="og:image"]', "content", imageUrl);
+    updateMeta('meta[name="twitter:card"]', "content", "summary_large_image");
+    updateMeta('meta[name="twitter:title"]', "content", pageTitle);
+    updateMeta('meta[name="twitter:description"]', "content", description);
+    updateMeta('meta[name="twitter:image"]', "content", imageUrl);
+    updateMeta('link[rel="canonical"]', "href", pageUrl);
+
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [eventQuery.data]);
+
+  useEffect(() => {
+    if (!showRecentWishesPreview || !recentWishesSectionRef.current) {
+      return;
+    }
+
+    recentWishesSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [showRecentWishesPreview]);
+
   const initializeGiftMutation = useMutation({
     mutationFn: () =>
       eventService.initializeGift(slug, {
         amountNaira: safeGiftAmountNaira,
         message: giftForm.message || undefined,
-        senderEmail: giftForm.senderEmail || undefined,
         senderName: giftForm.senderName
       }),
     onError: (error) => {
@@ -262,7 +339,6 @@ export function PublicEventPage() {
       setGiftForm({
         amountNaira: "",
         message: "",
-        senderEmail: "",
         senderName: ""
       });
       showToast({
@@ -308,7 +384,6 @@ export function PublicEventPage() {
     mutationFn: () =>
       eventService.submitWish(slug, {
         message: wishForm.message,
-        senderEmail: wishForm.senderEmail || undefined,
         senderName: wishForm.senderName
       }),
     onError: (error) => {
@@ -324,7 +399,6 @@ export function PublicEventPage() {
     onSuccess: async (response) => {
       setWishForm({
         message: "",
-        senderEmail: "",
         senderName: ""
       });
       setWishCelebrationTick(Date.now());
@@ -352,6 +426,7 @@ export function PublicEventPage() {
             : current
       );
       await queryClient.invalidateQueries({ queryKey: ["public-event", slug] });
+        setIsWishSuccessModalOpen(true);
       showToast({
         title: "Wish sent",
         description: "Your heartfelt note has been added to the celebration.",
@@ -364,7 +439,6 @@ export function PublicEventPage() {
     mutationFn: () =>
       eventService.submitGuestbookEntry(slug, {
         message: guestbookForm.message,
-        senderEmail: guestbookForm.senderEmail || undefined,
         senderName: guestbookForm.senderName
       }),
     onError: (error) => {
@@ -380,10 +454,10 @@ export function PublicEventPage() {
     onSuccess: async (response) => {
       setGuestbookForm({
         message: "",
-        senderEmail: "",
         senderName: ""
       });
       setGuestbookCelebrationTick(Date.now());
+      setShowRecentGuestbookPreview(false);
       queryClient.setQueryData<PublicEventQueryData>(
         ["public-event", slug],
         (current) =>
@@ -405,6 +479,7 @@ export function PublicEventPage() {
             : current
       );
       await queryClient.invalidateQueries({ queryKey: ["public-event", slug] });
+      setIsGuestbookSuccessModalOpen(true);
       showToast({
         title: "Memory saved",
         description: "Your guestbook note has been added to this celebration's memory book.",
@@ -487,6 +562,55 @@ export function PublicEventPage() {
     }
   });
 
+  const eventData = eventQuery.data?.data;
+  const event = eventData?.event;
+  const recentGuestbookEntries = eventData?.recentGuestbookEntries ?? [];
+  const recentWishes = eventData?.recentWishes ?? [];
+  const stats = eventData?.stats;
+  const wishMessageLength = wishForm.message.length;
+  const wishCharactersRemaining = WISH_MESSAGE_LIMIT - wishMessageLength;
+  const isWishMessageOverLimit = wishMessageLength > WISH_MESSAGE_LIMIT;
+  const canSubmitWish =
+    !submitWishMutation.isPending &&
+    wishForm.senderName.trim().length >= 2 &&
+    wishForm.message.trim().length > 0 &&
+    !isWishMessageOverLimit;
+    const canShowRecentWishes = Boolean(event?.showPublicRecentWishes);
+    const canShowRecentGuestbook = Boolean(event?.showPublicRecentGuestbook);
+    const shouldShowRecentWishes = showRecentWishesPreview;
+  const hasVisibleRecentWishes = recentWishes.length > 0;
+  const recentWishesPageSize = 4;
+  const recentWishesTotalPages = Math.max(1, Math.ceil(recentWishes.length / recentWishesPageSize));
+  const recentWishesCurrentPage = Math.min(recentWishesPage, recentWishesTotalPages);
+  const recentWishesVisible = useMemo(() => {
+    const start = (recentWishesCurrentPage - 1) * recentWishesPageSize;
+    return recentWishes.slice(start, start + recentWishesPageSize);
+  }, [recentWishes, recentWishesCurrentPage]);
+  const hasVisibleRecentGuestbookEntries = recentGuestbookEntries.length > 0;
+  const recentGuestbookPageSize = 4;
+  const recentGuestbookTotalPages = Math.max(
+    1,
+    Math.ceil(recentGuestbookEntries.length / recentGuestbookPageSize)
+  );
+  const recentGuestbookCurrentPage = Math.min(recentGuestbookPage, recentGuestbookTotalPages);
+  const recentGuestbookVisible = useMemo(() => {
+    const start = (recentGuestbookCurrentPage - 1) * recentGuestbookPageSize;
+    return recentGuestbookEntries.slice(start, start + recentGuestbookPageSize);
+  }, [recentGuestbookEntries, recentGuestbookCurrentPage]);
+
+  useEffect(() => {
+    setRecentGuestbookPage(1);
+    }, [recentGuestbookEntries.length, showRecentGuestbookPreview]);
+  useEffect(() => {
+    setRecentWishesPage(1);
+  }, [recentWishes.length, shouldShowRecentWishes]);
+
+  const celebrationStats = stats ?? {
+    giftsCount: 0,
+    guestbookCount: 0,
+    wishesCount: 0
+  };
+
   const reactionCounts = useMemo(() => {
     const counts = reactionsQuery.data?.data.counts ?? [];
     return reactionOptions.map((reactionType) => ({
@@ -512,7 +636,7 @@ export function PublicEventPage() {
     );
   }
 
-  if (eventQuery.isError || !eventQuery.data) {
+  if (eventQuery.isError || !eventData || !event) {
     return (
       <main className="mx-auto flex min-h-screen max-w-3xl items-center px-4">
         <EmptyState
@@ -523,7 +647,6 @@ export function PublicEventPage() {
     );
   }
 
-  const { event, recentGuestbookEntries, recentWishes, stats } = eventQuery.data.data;
   const countdownLabel = getCountdownLabel(event.eventDate);
 
   return (
@@ -589,13 +712,6 @@ export function PublicEventPage() {
             >
               Guestbook
             </Button>
-            <Button
-              variant="secondary"
-              className="bg-white/82"
-              onClick={() => navigate("/")}
-            >
-              Create your page
-            </Button>
           </>
         }
         metaSlot={
@@ -607,15 +723,15 @@ export function PublicEventPage() {
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-[20px] bg-cream-50 p-3">
                 <p className="font-semibold text-charcoal-900">Wishes</p>
-                <p className="mt-2">{stats.wishesCount}</p>
+                <p className="mt-2">{celebrationStats.wishesCount}</p>
               </div>
               <div className="rounded-[20px] bg-cream-50 p-3">
                 <p className="font-semibold text-charcoal-900">Memories</p>
-                <p className="mt-2">{stats.guestbookCount}</p>
+                <p className="mt-2">{celebrationStats.guestbookCount}</p>
               </div>
               <div className="rounded-[20px] bg-cream-50 p-3">
                 <p className="font-semibold text-charcoal-900">Gifts</p>
-                <p className="mt-2">{stats.giftsCount}</p>
+                <p className="mt-2">{celebrationStats.giftsCount}</p>
               </div>
             </div>
           </div>
@@ -625,7 +741,7 @@ export function PublicEventPage() {
           <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
             <Card
               title="Celebrate this moment"
-              description={`A premium invitation page for ${event.eventType.toLowerCase()} wishes, memories, and support.`}
+              description={`A warm invitation page for ${event.eventType.toLowerCase()} wishes, memories, and support.`}
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-[24px] bg-cream-50 p-4">
@@ -682,19 +798,143 @@ export function PublicEventPage() {
 
           <section className="grid gap-6 xl:grid-cols-[0.98fr_1.02fr]">
             <Card
-              title="Recent wishes preview"
-              description="A glimpse of the heartfelt notes already arriving on this page."
+              title="Have more to say?"
+              description="Longer stories belong in the Guestbook, where visitors can leave fuller memories."
             >
-              {recentWishes.length ? (
-                <div className="space-y-3">
-                  {recentWishes.map((wish, index) => (
+              <div className="space-y-4">
+                <div className="rounded-[24px] border border-plum-700/10 bg-cream-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-plum-700">
+                    Guestbook
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-charcoal-900/72">
+                    Have more to say? Leave a longer memory in the Guestbook.
+                  </p>
+                </div>
+                <Button variant="secondary" onClick={() => setIsGuestbookModalOpen(true)}>
+                  Open Guestbook
+                </Button>
+              </div>
+            </Card>
+
+            <Card
+              className="relative overflow-visible"
+              title="Leave a wish"
+              description="Guests do not need an account. Just add your name and heartfelt message."
+            >
+              <WishCelebrationBurst isVisible={Boolean(wishCelebrationTick)} />
+              <form
+                id="leave-wish"
+                className="space-y-4"
+                onSubmit={(eventSubmit) => {
+                  eventSubmit.preventDefault();
+                  if (submitWishMutation.isPending) {
+                    return;
+                  }
+                  submitWishMutation.mutate();
+                }}
+              >
+                <FormField label="Your name">
+                  <Input
+                    placeholder="Ada"
+                    value={wishForm.senderName}
+                    onChange={(eventChange) =>
+                      setWishForm((current) => ({
+                        ...current,
+                        senderName: eventChange.target.value
+                      }))
+                    }
+                  />
+                </FormField>
+                <FormField
+                  label="Your wish"
+                  helperText="Keep your wish short and sweet. If you have a longer memory or story to share, use the Guestbook instead."
+                >
+                  <Textarea
+                    placeholder="Wishing you joy, peace, and unforgettable beautiful moments ahead."
+                    rows={5}
+                    maxLength={WISH_MESSAGE_LIMIT}
+                    value={wishForm.message}
+                    onChange={(eventChange) =>
+                      setWishForm((current) => ({
+                        ...current,
+                        message: eventChange.target.value
+                      }))
+                    }
+                  />
+                </FormField>
+                <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                  <p
+                    className={
+                      isWishMessageOverLimit
+                        ? "text-rose-700"
+                        : wishCharactersRemaining < 30
+                          ? "text-amber-700"
+                          : "text-charcoal-900/56"
+                    }
+                  >
+                    {isWishMessageOverLimit
+                      ? "Wishes are limited to 280 characters. Please use the Guestbook for longer messages."
+                      : `${Math.max(wishCharactersRemaining, 0)} characters left`}
+                  </p>
+                  <p className="text-charcoal-900/56">
+                    {wishMessageLength}/{WISH_MESSAGE_LIMIT}
+                  </p>
+                </div>
+                <AnimatePresence>
+                  {wishCelebrationTick ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="rounded-[20px] border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-charcoal-900/72"
+                    >
+                      Your wish has landed beautifully and the latest preview is updating.
+                    </motion.div>
+                    ) : null}
+                </AnimatePresence>
+                <Button disabled={!canSubmitWish} type="submit">
+                  {submitWishMutation.isPending ? "Sending your wish..." : "Send wish"}
+                </Button>
+                <div className="pt-1 text-sm text-charcoal-900/60">
+                  <button
+                    className="font-medium text-plum-800 underline underline-offset-4 transition hover:text-plum-700"
+                    type="button"
+                    onClick={() => setIsGuestbookModalOpen(true)}
+                  >
+                    Have more to say? Leave a longer memory in the Guestbook.
+                  </button>
+                </div>
+              </form>
+            </Card>
+          </section>
+
+          {shouldShowRecentWishes ? (
+            <section ref={recentWishesSectionRef} className="space-y-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-plum-700">
+                    Recent wishes
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <h2 className="font-display text-3xl text-charcoal-900">
+                      Wishes already on the wall
+                    </h2>
+                    <Button variant="secondary" onClick={() => navigate("/")}>
+                      Create Your Own Celebration
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              {hasVisibleRecentWishes ? (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {recentWishesVisible.map((wish, index) => (
                     <motion.div
                       key={wish.id}
                       initial={{ opacity: 0, y: 16 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true, amount: 0.4 }}
                       transition={{ delay: index * 0.06, duration: 0.25 }}
-                      className="relative rounded-[22px] border border-plum-700/10 bg-white/78 p-4"
+                      className="relative rounded-[22px] border border-plum-700/10 bg-white/78 p-4 shadow-[0_12px_32px_rgba(67,34,53,0.06)]"
                     >
                       <EmojiReactionBurst
                         key={reactionBurst?.key ?? 0}
@@ -750,86 +990,183 @@ export function PublicEventPage() {
                   description="Be the first guest to leave a warm note for this celebration."
                 />
               )}
-            </Card>
-
-            <Card
-              className="relative overflow-visible"
-              title="Leave a wish"
-              description="Guests do not need an account. Just add your name and heartfelt message."
-            >
-              <WishCelebrationBurst isVisible={Boolean(wishCelebrationTick)} />
-              <form
-                id="leave-wish"
-                className="space-y-4"
-                onSubmit={(eventSubmit) => {
-                  eventSubmit.preventDefault();
-                  submitWishMutation.mutate();
-                }}
-              >
-                <FormField label="Your name">
-                  <Input
-                    placeholder="Ada"
-                    value={wishForm.senderName}
-                    onChange={(eventChange) =>
-                      setWishForm((current) => ({
-                        ...current,
-                        senderName: eventChange.target.value
-                      }))
-                    }
-                  />
-                </FormField>
-                <FormField
-                  label="Your email"
-                  helperText="Optional, if you want the celebrant to know how to reach you."
-                >
-                  <Input
-                    type="email"
-                    placeholder="ada@example.com"
-                    value={wishForm.senderEmail}
-                    onChange={(eventChange) =>
-                      setWishForm((current) => ({
-                        ...current,
-                        senderEmail: eventChange.target.value
-                      }))
-                    }
-                  />
-                </FormField>
-                <FormField
-                  label="Your wish"
-                  helperText="Share a kind message, memory, or note for the day."
-                >
-                  <Textarea
-                    placeholder="Wishing you joy, peace, and unforgettable beautiful moments ahead."
-                    rows={5}
-                    value={wishForm.message}
-                    onChange={(eventChange) =>
-                      setWishForm((current) => ({
-                        ...current,
-                        message: eventChange.target.value
-                      }))
-                    }
-                  />
-                </FormField>
-                <AnimatePresence>
-                  {wishCelebrationTick ? (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      className="rounded-[20px] border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-charcoal-900/72"
+              {hasVisibleRecentWishes && recentWishesTotalPages > 1 ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-white/50 bg-white/40 px-4 py-3 backdrop-blur-sm">
+                  <p className="text-xs uppercase tracking-[0.22em] text-charcoal-900/45">
+                    {recentWishesCurrentPage} / {recentWishesTotalPages}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      className="rounded-full border border-transparent bg-transparent px-2 py-1 text-sm text-charcoal-900/58 transition hover:text-charcoal-900 disabled:cursor-not-allowed disabled:opacity-35"
+                      disabled={recentWishesCurrentPage === 1}
+                      onClick={() =>
+                        setRecentWishesPage((current) => Math.max(1, current - 1))
+                      }
+                      type="button"
                     >
-                      Your wish has landed beautifully and the latest preview is updating.
-                    </motion.div>
-                  ) : null}
-                </AnimatePresence>
-                <Button disabled={submitWishMutation.isPending} type="submit">
-                  {submitWishMutation.isPending ? "Sending your wish..." : "Send wish"}
-                </Button>
-              </form>
-            </Card>
-          </section>
+                      Newer
+                    </button>
+                    {Array.from({ length: recentWishesTotalPages }, (_, index) => index + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          className={
+                            page === recentWishesCurrentPage
+                              ? "min-w-8 rounded-full bg-plum-800 px-3 py-1.5 text-sm font-medium text-white shadow-[0_8px_18px_rgba(67,34,53,0.12)]"
+                              : "min-w-8 rounded-full bg-white/50 px-3 py-1.5 text-sm font-medium text-charcoal-900/62 transition hover:bg-white/75 hover:text-charcoal-900"
+                          }
+                          onClick={() => setRecentWishesPage(page)}
+                          type="button"
+                        >
+                          {page}
+                        </button>
+                      )
+                    )}
+                    <button
+                      className="rounded-full border border-transparent bg-transparent px-2 py-1 text-sm text-charcoal-900/58 transition hover:text-charcoal-900 disabled:cursor-not-allowed disabled:opacity-35"
+                      disabled={recentWishesCurrentPage >= recentWishesTotalPages}
+                      onClick={() =>
+                        setRecentWishesPage((current) =>
+                          Math.min(recentWishesTotalPages, current + 1)
+                        )
+                      }
+                      type="button"
+                    >
+                      Older
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
         </div>
       </PublicEventLayout>
+
+      <Modal
+        isOpen={isWishSuccessModalOpen}
+        onClose={() => setIsWishSuccessModalOpen(false)}
+        title="Wish received"
+        description="Thank you for adding your words of love to this celebration."
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+              {canShowRecentWishes && hasVisibleRecentWishes ? (
+                <div className="rounded-[24px] border border-plum-700/10 bg-cream-50 p-5">
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      setShowRecentWishesPreview(true);
+                      setIsWishSuccessModalOpen(false);
+                    }}
+                    variant="secondary"
+                  >
+                    View Recent Wishes
+                  </Button>
+                  <p className="mt-3 text-sm leading-6 text-charcoal-900/62">
+                    See some of the love and messages others have shared.
+                  </p>
+                </div>
+              ) : null}
+
+            <div className="rounded-[24px] border border-plum-700/10 bg-white/78 p-5">
+              <Button
+                className="w-full"
+                onClick={() => navigate("/")}
+              >
+                Create Your Own Celebration
+              </Button>
+              <p className="mt-3 text-sm leading-6 text-charcoal-900/62">
+                Start your own page and collect wishes, memories, and gifts.
+              </p>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isGuestbookSuccessModalOpen}
+        onClose={() => {
+          setIsGuestbookSuccessModalOpen(false);
+          setShowRecentGuestbookPreview(false);
+        }}
+        title="Memory received"
+        description="Thank you for adding a keepsake note to this celebration."
+      >
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-plum-700/10 bg-white/78 p-5">
+            <p className="text-sm leading-6 text-charcoal-900/72">
+              Thank you for adding a keepsake note to this celebration.
+            </p>
+            <Button onClick={() => navigate("/")}>Create Your Own Celebration</Button>
+          </div>
+
+            {canShowRecentGuestbook && !showRecentGuestbookPreview && hasVisibleRecentGuestbookEntries ? (
+              <div className="rounded-[24px] border border-plum-700/10 bg-cream-50 p-5">
+                <Button
+                  className="w-full"
+                  onClick={() => setShowRecentGuestbookPreview(true)}
+                  variant="secondary"
+                >
+                  View Recent Memories
+                </Button>
+                <p className="mt-3 text-sm leading-6 text-charcoal-900/62">
+                  See some of the love and stories others have shared.
+                </p>
+              </div>
+            ) : null}
+
+            {canShowRecentGuestbook && showRecentGuestbookPreview && hasVisibleRecentGuestbookEntries ? (
+              <div className="space-y-3 rounded-[26px] border border-white/70 bg-white/84 p-4">
+              {recentGuestbookVisible.map((entry, index) => (
+                <motion.article
+                  key={entry.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.2 }}
+                  className="rounded-[22px] border border-plum-700/10 bg-cream-50 p-4"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <p className="font-semibold text-charcoal-900">{entry.senderName}</p>
+                    <p className="text-xs uppercase tracking-[0.22em] text-charcoal-900/42">
+                      {new Date(entry.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-charcoal-900/72">{entry.message}</p>
+                </motion.article>
+              ))}
+              {recentGuestbookTotalPages > 1 ? (
+                <div className="flex items-center justify-between gap-3 pt-1 text-xs uppercase tracking-[0.2em] text-charcoal-900/42">
+                  <button
+                    className="transition hover:text-charcoal-900 disabled:cursor-not-allowed disabled:opacity-30"
+                    disabled={recentGuestbookCurrentPage === 1}
+                    onClick={() =>
+                      setRecentGuestbookPage((current) => Math.max(1, current - 1))
+                    }
+                    type="button"
+                  >
+                    Newer
+                  </button>
+                  <span>
+                    {recentGuestbookCurrentPage} / {recentGuestbookTotalPages}
+                  </span>
+                  <button
+                    className="transition hover:text-charcoal-900 disabled:cursor-not-allowed disabled:opacity-30"
+                    disabled={recentGuestbookCurrentPage >= recentGuestbookTotalPages}
+                    onClick={() =>
+                      setRecentGuestbookPage((current) =>
+                        Math.min(recentGuestbookTotalPages, current + 1)
+                      )
+                    }
+                    type="button"
+                  >
+                    Older
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </Modal>
 
       <Modal
         isOpen={isGiftModalOpen}
@@ -863,22 +1200,6 @@ export function PublicEventPage() {
                 setGiftForm((current) => ({
                   ...current,
                   senderName: eventChange.target.value
-                }))
-              }
-            />
-          </FormField>
-          <FormField
-            label="Your email"
-            helperText="Optional for the celebration record and Paystack receipt."
-          >
-            <Input
-              type="email"
-              placeholder="ada@example.com"
-              value={giftForm.senderEmail}
-              onChange={(eventChange) =>
-                setGiftForm((current) => ({
-                  ...current,
-                  senderEmail: eventChange.target.value
                 }))
               }
             />
@@ -952,7 +1273,7 @@ export function PublicEventPage() {
         isOpen={isGuestbookModalOpen}
         onClose={() => setIsGuestbookModalOpen(false)}
         title="Guestbook memories"
-        description="This CTA opens the memory-book experience, where guests can leave longer stories and moments for the celebrant."
+        description="Longer notes feel more like keepsakes here, arranged as collected pages instead of a plain comment thread."
         footer={
           <div className="flex justify-end">
             <Button onClick={() => setIsGuestbookModalOpen(false)}>Close</Button>
@@ -960,7 +1281,7 @@ export function PublicEventPage() {
         }
       >
         <div className="space-y-6">
-            <div className="grid gap-6 xl:grid-cols-[1fr_0.95fr]">
+          <div className="flex justify-center">
             <div className="relative min-w-0 overflow-hidden rounded-[28px] border border-plum-700/10 bg-[linear-gradient(180deg,rgba(255,250,244,0.94)_0%,rgba(248,238,228,0.92)_100%)] p-5 shadow-[0_20px_50px_rgba(67,34,53,0.08)]">
               <div className="absolute -right-8 top-5 h-20 w-20 rounded-full bg-blush-100/70 blur-2xl" />
               <div className="absolute left-6 top-0 h-6 w-24 -rotate-3 rounded-b-[18px] bg-white/70" />
@@ -978,6 +1299,9 @@ export function PublicEventPage() {
                   className="space-y-4"
                   onSubmit={(eventSubmit) => {
                     eventSubmit.preventDefault();
+                    if (submitGuestbookMutation.isPending) {
+                      return;
+                    }
                     submitGuestbookMutation.mutate();
                   }}
                 >
@@ -989,22 +1313,6 @@ export function PublicEventPage() {
                         setGuestbookForm((current) => ({
                           ...current,
                           senderName: eventChange.target.value
-                        }))
-                      }
-                    />
-                  </FormField>
-                  <FormField
-                    label="Your email"
-                    helperText="Optional, if you want the celebrant to know how to reach you."
-                  >
-                    <Input
-                      type="email"
-                      placeholder="ada@example.com"
-                      value={guestbookForm.senderEmail}
-                      onChange={(eventChange) =>
-                        setGuestbookForm((current) => ({
-                          ...current,
-                          senderEmail: eventChange.target.value
                         }))
                       }
                     />
@@ -1044,50 +1352,6 @@ export function PublicEventPage() {
                   </Button>
                 </form>
               </div>
-            </div>
-
-            <div className="min-w-0 space-y-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-plum-700">
-                  Memory book preview
-                </p>
-                <p className="mt-2 text-sm leading-7 text-charcoal-900/68">
-                  Longer notes feel more like keepsakes here, arranged as collected pages instead of a plain comment thread.
-                </p>
-              </div>
-
-              {recentGuestbookEntries.length ? (
-                <div className="space-y-4">
-                  {recentGuestbookEntries.map((entry, index) => (
-                    <motion.article
-                      key={entry.id}
-                      initial={{ opacity: 0, y: 18, rotate: index % 2 === 0 ? -1.5 : 1.5 }}
-                      animate={{ opacity: 1, y: 0, rotate: index % 2 === 0 ? -1.5 : 1.5 }}
-                      className="min-w-0 rounded-[28px] border border-white/70 bg-white/88 p-5 shadow-card"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-semibold text-charcoal-900">{entry.senderName}</p>
-                          <p className="mt-1 text-xs uppercase tracking-[0.22em] text-charcoal-900/42">
-                            Memory note
-                          </p>
-                        </div>
-                        <p className="text-xs uppercase tracking-[0.22em] text-charcoal-900/42">
-                          {new Date(entry.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <p className="mt-4 border-l-2 border-blush-100 pl-4 text-sm leading-7 text-charcoal-900/74">
-                        {entry.message}
-                      </p>
-                    </motion.article>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  title="No guestbook memories yet"
-                  description="The first long-form memory shared here will open the celebration's memory book."
-                />
-              )}
             </div>
           </div>
         </div>

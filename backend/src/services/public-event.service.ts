@@ -54,6 +54,13 @@ export const publicEventService = {
       throw new AppError("Wish message cannot be empty after sanitization", 400);
     }
 
+    if (sanitizedMessage.length > 280) {
+      throw new AppError(
+        "Wishes are limited to 280 characters. Please use the Guestbook for longer messages.",
+        400
+      );
+    }
+
     const wish = await createWishForEvent({
       eventId: event.id,
       message: sanitizedMessage,

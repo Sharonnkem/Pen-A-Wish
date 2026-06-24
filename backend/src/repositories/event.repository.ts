@@ -8,6 +8,39 @@ function getExecutor(client?: DbClient) {
   return client ?? db;
 }
 
+let hasShowPublicRecentWishesColumnPromise: Promise<boolean> | null = null;
+let hasShowPublicRecentGuestbookColumnPromise: Promise<boolean> | null = null;
+
+async function hasShowPublicRecentWishesColumn() {
+  if (!hasShowPublicRecentWishesColumnPromise) {
+    hasShowPublicRecentWishesColumnPromise = query<{ exists: boolean }>(
+      `SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'events'
+          AND column_name = 'show_public_recent_wishes'
+      ) AS exists;`
+    ).then((result) => result.rows[0]?.exists ?? false);
+  }
+
+  return hasShowPublicRecentWishesColumnPromise;
+}
+
+async function hasShowPublicRecentGuestbookColumn() {
+  if (!hasShowPublicRecentGuestbookColumnPromise) {
+    hasShowPublicRecentGuestbookColumnPromise = query<{ exists: boolean }>(
+      `SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'events'
+          AND column_name = 'show_public_recent_guestbook'
+      ) AS exists;`
+    ).then((result) => result.rows[0]?.exists ?? false);
+  }
+
+  return hasShowPublicRecentGuestbookColumnPromise;
+}
+
 export async function createEvent(
   input: {
     celebrantName: string;
@@ -16,6 +49,8 @@ export async function createEvent(
     eventDate: string;
     eventType: string;
     profileImageUrl?: string | null;
+    showPublicRecentGuestbook?: boolean;
+    showPublicRecentWishes?: boolean;
     slug: string;
     title: string;
     userId: string;
@@ -23,6 +58,8 @@ export async function createEvent(
   client?: DbClient
 ) {
   const executor = getExecutor(client);
+  const hasShowPublicRecentWishes = await hasShowPublicRecentWishesColumn();
+  const hasShowPublicRecentGuestbook = await hasShowPublicRecentGuestbookColumn();
   const result = await executor.query<EventRecord>(
     `INSERT INTO events (
       user_id,
@@ -33,9 +70,9 @@ export async function createEvent(
       slug,
       profile_image_url,
       cover_image_url,
-      description
+      description${hasShowPublicRecentWishes ? ",\n      show_public_recent_wishes" : ""}${hasShowPublicRecentGuestbook ? ",\n      show_public_recent_guestbook" : ""}
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9${hasShowPublicRecentWishes ? ", $10" : ""}${hasShowPublicRecentGuestbook ? ", $11" : ""})
     RETURNING
       id,
       user_id,
@@ -48,9 +85,12 @@ export async function createEvent(
       cover_image_url,
       description,
       is_public,
+      ${hasShowPublicRecentWishes ? "show_public_recent_wishes" : "FALSE AS show_public_recent_wishes"},
+      ${hasShowPublicRecentGuestbook ? "show_public_recent_guestbook" : "FALSE AS show_public_recent_guestbook"},
       created_at,
       updated_at;`,
-    [
+    hasShowPublicRecentWishes || hasShowPublicRecentGuestbook
+      ? [
       input.userId,
       input.title,
       input.celebrantName,
@@ -59,8 +99,21 @@ export async function createEvent(
       input.slug,
       input.profileImageUrl ?? null,
       input.coverImageUrl ?? null,
-      input.description ?? null
-    ]
+      input.description ?? null,
+      ...(hasShowPublicRecentWishes ? [input.showPublicRecentWishes ?? false] : []),
+      ...(hasShowPublicRecentGuestbook ? [input.showPublicRecentGuestbook ?? false] : [])
+        ]
+      : [
+          input.userId,
+          input.title,
+          input.celebrantName,
+          input.eventType,
+          input.eventDate,
+          input.slug,
+          input.profileImageUrl ?? null,
+          input.coverImageUrl ?? null,
+          input.description ?? null
+        ]
   );
 
   return result.rows[0];
@@ -75,11 +128,15 @@ export async function updateEvent(
     eventDate: string;
     eventType: string;
     profileImageUrl?: string | null;
+    showPublicRecentGuestbook?: boolean;
+    showPublicRecentWishes?: boolean;
     title: string;
   },
   client?: DbClient
 ) {
   const executor = getExecutor(client);
+  const hasShowPublicRecentWishes = await hasShowPublicRecentWishesColumn();
+  const hasShowPublicRecentGuestbook = await hasShowPublicRecentGuestbookColumn();
   const result = await executor.query<EventRecord>(
     `UPDATE events
      SET
@@ -89,7 +146,7 @@ export async function updateEvent(
        event_date = $5,
        profile_image_url = $6,
        cover_image_url = $7,
-       description = $8,
+       description = $8${hasShowPublicRecentWishes ? ",\n       show_public_recent_wishes = $9" : ""}${hasShowPublicRecentGuestbook ? `,\n       show_public_recent_guestbook = ${hasShowPublicRecentWishes ? "$10" : "$9"}` : ""},
        updated_at = NOW()
      WHERE id = $1
      RETURNING
@@ -104,9 +161,12 @@ export async function updateEvent(
        cover_image_url,
        description,
        is_public,
+       ${hasShowPublicRecentWishes ? "show_public_recent_wishes" : "FALSE AS show_public_recent_wishes"},
+       ${hasShowPublicRecentGuestbook ? "show_public_recent_guestbook" : "FALSE AS show_public_recent_guestbook"},
        created_at,
        updated_at;`,
-    [
+    hasShowPublicRecentWishes || hasShowPublicRecentGuestbook
+      ? [
       eventId,
       input.title,
       input.celebrantName,
@@ -114,8 +174,20 @@ export async function updateEvent(
       input.eventDate,
       input.profileImageUrl ?? null,
       input.coverImageUrl ?? null,
-      input.description ?? null
-    ]
+      input.description ?? null,
+      ...(hasShowPublicRecentWishes ? [input.showPublicRecentWishes ?? false] : []),
+      ...(hasShowPublicRecentGuestbook ? [input.showPublicRecentGuestbook ?? false] : [])
+        ]
+      : [
+          eventId,
+          input.title,
+          input.celebrantName,
+          input.eventType,
+          input.eventDate,
+          input.profileImageUrl ?? null,
+          input.coverImageUrl ?? null,
+          input.description ?? null
+        ]
   );
 
   return result.rows[0] ?? null;
@@ -127,6 +199,8 @@ export async function deleteEvent(eventId: string, client?: DbClient) {
 }
 
 export async function findEventById(eventId: string) {
+  const hasShowPublicRecentWishes = await hasShowPublicRecentWishesColumn();
+  const hasShowPublicRecentGuestbook = await hasShowPublicRecentGuestbookColumn();
   const result = await query<EventRecord>(
     `SELECT
       id,
@@ -140,6 +214,8 @@ export async function findEventById(eventId: string) {
       cover_image_url,
       description,
       is_public,
+      ${hasShowPublicRecentWishes ? "show_public_recent_wishes" : "FALSE AS show_public_recent_wishes"},
+      ${hasShowPublicRecentGuestbook ? "show_public_recent_guestbook" : "FALSE AS show_public_recent_guestbook"},
       created_at,
       updated_at
      FROM events
@@ -152,6 +228,8 @@ export async function findEventById(eventId: string) {
 }
 
 export async function findEventBySlug(slug: string) {
+  const hasShowPublicRecentWishes = await hasShowPublicRecentWishesColumn();
+  const hasShowPublicRecentGuestbook = await hasShowPublicRecentGuestbookColumn();
   const result = await query<EventRecord>(
     `SELECT
       id,
@@ -165,6 +243,8 @@ export async function findEventBySlug(slug: string) {
       cover_image_url,
       description,
       is_public,
+      ${hasShowPublicRecentWishes ? "show_public_recent_wishes" : "FALSE AS show_public_recent_wishes"},
+      ${hasShowPublicRecentGuestbook ? "show_public_recent_guestbook" : "FALSE AS show_public_recent_guestbook"},
       created_at,
       updated_at
      FROM events
@@ -177,6 +257,8 @@ export async function findEventBySlug(slug: string) {
 }
 
 export async function getMyEvents(userId: string) {
+  const hasShowPublicRecentWishes = await hasShowPublicRecentWishesColumn();
+  const hasShowPublicRecentGuestbook = await hasShowPublicRecentGuestbookColumn();
   const result = await query<EventSummaryRecord>(
     `SELECT
       e.id,
@@ -190,6 +272,8 @@ export async function getMyEvents(userId: string) {
       e.cover_image_url,
       e.description,
       e.is_public,
+      ${hasShowPublicRecentWishes ? "e.show_public_recent_wishes" : "FALSE AS show_public_recent_wishes"},
+      ${hasShowPublicRecentGuestbook ? "e.show_public_recent_guestbook" : "FALSE AS show_public_recent_guestbook"},
       e.created_at,
       e.updated_at,
       COUNT(DISTINCT w.id)::text AS wishes_count,
@@ -236,4 +320,3 @@ export async function slugExists(slug: string, excludeEventId?: string) {
   const result = await query<{ exists: boolean }>(sql, params);
   return result.rows[0]?.exists ?? false;
 }
-

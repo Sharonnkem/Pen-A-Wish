@@ -1,6 +1,13 @@
 export type WishWallBackgroundMode = "solid" | "gradient" | "image";
 export type WishWallCardStyle = "linen" | "glass" | "polaroid";
-export type WishWallLayoutMode = "masonry" | "grid" | "stack";
+export type WishWallLayoutMode =
+  | "collageScrapbook"
+  | "letterTimeline"
+  | "buntingGarland"
+  | "openJournal"
+  | "masonry"
+  | "grid"
+  | "stack";
 export type WishWallThemePreset = "paper" | "sunset" | "garden" | "midnight";
 export type WishWallTypographyKey = "serif" | "sans" | "mono" | "display" | "handwritten";
 

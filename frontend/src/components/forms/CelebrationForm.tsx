@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "../common/Button";
+import { ImageCropModal } from "./ImageCropModal";
 import { LoadingState } from "../common/LoadingState";
 import { useToast } from "../common/Toast";
 import { FormField } from "./FormField";
@@ -24,6 +25,26 @@ function toDateValue(value: string | undefined) {
   return value.slice(0, 10);
 }
 
+function useObjectUrl(file: File | null) {
+  const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    if (!file) {
+      setUrl("");
+      return;
+    }
+
+    const nextUrl = URL.createObjectURL(file);
+    setUrl(nextUrl);
+
+    return () => {
+      URL.revokeObjectURL(nextUrl);
+    };
+  }, [file]);
+
+  return url;
+}
+
 export function CelebrationForm({
   initialEvent,
   isSubmitting,
@@ -36,23 +57,47 @@ export function CelebrationForm({
   const [eventType, setEventType] = useState(initialEvent?.eventType ?? "");
   const [eventDate, setEventDate] = useState(toDateValue(initialEvent?.eventDate));
   const [description, setDescription] = useState(initialEvent?.description ?? "");
+  const [showPublicRecentWishes, setShowPublicRecentWishes] = useState(
+    initialEvent?.showPublicRecentWishes ?? false
+  );
+  const [showPublicRecentGuestbook, setShowPublicRecentGuestbook] = useState(
+    initialEvent?.showPublicRecentGuestbook ?? false
+  );
   const [profileImageUrl, setProfileImageUrl] = useState(
     initialEvent?.profileImageUrl ?? ""
   );
   const [coverImageUrl, setCoverImageUrl] = useState(initialEvent?.coverImageUrl ?? "");
   const [profileFile, setProfileFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [profileCropSource, setProfileCropSource] = useState<File | null>(null);
+  const [coverCropSource, setCoverCropSource] = useState<File | null>(null);
+  const [cropTarget, setCropTarget] = useState<"profile" | "cover" | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const profilePreview = useMemo(
-    () => (profileFile ? URL.createObjectURL(profileFile) : profileImageUrl || ""),
-    [profileFile, profileImageUrl]
-  );
-  const coverPreview = useMemo(
-    () => (coverFile ? URL.createObjectURL(coverFile) : coverImageUrl || ""),
-    [coverFile, coverImageUrl]
-  );
+  useEffect(() => {
+    if (!initialEvent) {
+      return;
+    }
+
+    setTitle(initialEvent.title ?? "");
+    setCelebrantName(initialEvent.celebrantName ?? "");
+    setEventType(initialEvent.eventType ?? "");
+    setEventDate(toDateValue(initialEvent.eventDate));
+    setDescription(initialEvent.description ?? "");
+    setShowPublicRecentWishes(initialEvent.showPublicRecentWishes ?? false);
+    setShowPublicRecentGuestbook(initialEvent.showPublicRecentGuestbook ?? false);
+    setProfileImageUrl(initialEvent.profileImageUrl ?? "");
+    setCoverImageUrl(initialEvent.coverImageUrl ?? "");
+    setProfileFile(null);
+    setCoverFile(null);
+    setProfileCropSource(null);
+    setCoverCropSource(null);
+    setCropTarget(null);
+  }, [initialEvent]);
+
+  const profilePreview = useObjectUrl(profileFile) || profileImageUrl || "";
+  const coverPreview = useObjectUrl(coverFile) || coverImageUrl || "";
 
   async function uploadPendingImages() {
     setIsUploading(true);
@@ -120,6 +165,8 @@ export function CelebrationForm({
         eventDate,
         eventType,
         profileImageUrl: uploads.profileImageUrl,
+        showPublicRecentGuestbook,
+        showPublicRecentWishes,
         title
       });
     } catch (error) {
@@ -134,8 +181,66 @@ export function CelebrationForm({
     }
   }
 
+  function openCropper(target: "profile" | "cover", file: File | null) {
+    if (!file) {
+      return;
+    }
+
+    if (target === "profile") {
+      setProfileCropSource(file);
+    } else {
+      setCoverCropSource(file);
+    }
+
+    setCropTarget(target);
+  }
+
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
+      <ImageCropModal
+        aspectRatio={1}
+        backgroundColor="#fffaf4"
+        description="Zoom and crop the celebrant portrait so it feels polished on the public page."
+        file={profileCropSource}
+        isOpen={cropTarget === "profile"}
+        onClose={() => {
+          setCropTarget(null);
+          setProfileCropSource(null);
+        }}
+        onConfirm={async (croppedFile) => {
+          setProfileFile(croppedFile);
+          setProfileImageUrl("");
+          setProfileCropSource(null);
+          showToast({
+            title: "Profile image adjusted",
+            description: "Your portrait is ready to upload.",
+            tone: "success"
+          });
+        }}
+        title="Adjust profile image"
+      />
+      <ImageCropModal
+        aspectRatio={16 / 9}
+        backgroundColor="#fffaf4"
+        description="Crop the cover so the public invitation hero looks clean on desktop and mobile."
+        file={coverCropSource}
+        isOpen={cropTarget === "cover"}
+        onClose={() => {
+          setCropTarget(null);
+          setCoverCropSource(null);
+        }}
+        onConfirm={async (croppedFile) => {
+          setCoverFile(croppedFile);
+          setCoverImageUrl("");
+          setCoverCropSource(null);
+          showToast({
+            title: "Cover image adjusted",
+            description: "Your cover image is ready to upload.",
+            tone: "success"
+          });
+        }}
+        title="Adjust cover image"
+      />
       {(isUploading || isSubmitting) && !initialEvent ? (
         <LoadingState label="Preparing your celebration page..." />
       ) : null}
@@ -207,6 +312,48 @@ export function CelebrationForm({
             />
           </FormField>
         </div>
+
+        <div className="mt-6 rounded-[24px] border border-plum-700/10 bg-cream-50/72 p-4">
+          <div className="flex items-start gap-4">
+            <input
+              checked={showPublicRecentWishes}
+              className="mt-1 h-5 w-5 rounded border-plum-700/20 text-plum-700 focus:ring-plum-700/30"
+              id="show-public-recent-wishes"
+              type="checkbox"
+              onChange={(eventChange) => setShowPublicRecentWishes(eventChange.target.checked)}
+            />
+            <label className="space-y-1" htmlFor="show-public-recent-wishes">
+              <span className="block text-sm font-medium text-charcoal-900">
+                Show recent wishes publicly
+              </span>
+              <span className="block text-sm leading-6 text-charcoal-900/60">
+                Allow visitors to see recent wishes on your public celebration page.
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-[24px] border border-plum-700/10 bg-cream-50/72 p-4">
+          <div className="flex items-start gap-4">
+            <input
+              checked={showPublicRecentGuestbook}
+              className="mt-1 h-5 w-5 rounded border-plum-700/20 text-plum-700 focus:ring-plum-700/30"
+              id="show-public-recent-guestbook"
+              type="checkbox"
+              onChange={(eventChange) =>
+                setShowPublicRecentGuestbook(eventChange.target.checked)
+              }
+            />
+            <label className="space-y-1" htmlFor="show-public-recent-guestbook">
+              <span className="block text-sm font-medium text-charcoal-900">
+                Show guestbook memories publicly
+              </span>
+              <span className="block text-sm leading-6 text-charcoal-900/60">
+                Allow visitors to see recent guestbook memories on your public celebration page.
+              </span>
+            </label>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-[26px] border border-plum-700/10 bg-white/65 p-5 sm:p-6">
@@ -226,7 +373,10 @@ export function CelebrationForm({
               <Input
                 type="file"
                 accept="image/*"
-                onChange={(current) => setProfileFile(current.target.files?.[0] ?? null)}
+                onChange={(current) => {
+                  openCropper("profile", current.target.files?.[0] ?? null);
+                  current.target.value = "";
+                }}
               />
               {profilePreview ? (
                 <img
@@ -250,7 +400,10 @@ export function CelebrationForm({
               <Input
                 type="file"
                 accept="image/*"
-                onChange={(current) => setCoverFile(current.target.files?.[0] ?? null)}
+                onChange={(current) => {
+                  openCropper("cover", current.target.files?.[0] ?? null);
+                  current.target.value = "";
+                }}
               />
               {coverPreview ? (
                 <img

@@ -36,7 +36,7 @@ const defaultSettings: WishWallSettings = {
   },
   layout: {
     columns: 3,
-    mode: "masonry"
+    mode: "collageScrapbook"
   },
   themePreset: "paper",
   typography: {
@@ -77,6 +77,16 @@ const typographyOptions = [
   { label: "Typewriter mono", value: "mono" }
 ] as const;
 
+const layoutModeOptions = [
+  { label: "Collage Scrapbook", value: "collageScrapbook" as const },
+  { label: "Letter Timeline", value: "letterTimeline" as const },
+  { label: "Bunting Garland", value: "buntingGarland" as const },
+  { label: "Open Journal", value: "openJournal" as const }
+] satisfies Array<{
+  label: string;
+  value: WishWallSettings["layout"]["mode"];
+}>;
+
 function cloneSettings(settings: WishWallSettings): WishWallSettings {
   return {
     background: { ...settings.background },
@@ -107,7 +117,7 @@ function applyPreset(preset: WishWallSettings["themePreset"]): WishWallSettings 
         },
         layout: {
           columns: 3,
-          mode: "masonry"
+          mode: "collageScrapbook"
         },
         themePreset: "sunset"
       };
@@ -149,7 +159,7 @@ function applyPreset(preset: WishWallSettings["themePreset"]): WishWallSettings 
         },
         layout: {
           columns: 2,
-          mode: "grid"
+          mode: "letterTimeline"
         },
         typography: {
           bodyFont: "sans",
@@ -804,91 +814,7 @@ export function WallStudioPage() {
             </div>
           </details>
 
-          <details className="group rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-plum-700">
-                  Card style
-                </p>
-                <p className="mt-2 text-sm text-charcoal-900/62">Shape and texture of each wish card.</p>
-              </div>
-              <span className="text-2xl text-plum-700 transition-transform duration-200 group-open:rotate-180">
-                ⌄
-              </span>
-            </summary>
-            <div className="mt-4 grid gap-2">
-              {(["polaroid", "glass", "linen"] as const).map((style) => (
-                <Button
-                  key={style}
-                  variant={settings.cardStyle.style === style ? "primary" : "secondary"}
-                  className="justify-start"
-                  onClick={() =>
-                    updateSettings((current) => ({
-                      ...current,
-                      cardStyle: { ...current.cardStyle, style }
-                    }))
-                  }
-                >
-                  {style}
-                </Button>
-              ))}
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <Button
-                variant={settings.cardStyle.radius === "large" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() =>
-                  updateSettings((current) => ({
-                    ...current,
-                    cardStyle: { ...current.cardStyle, radius: "large" }
-                  }))
-                }
-              >
-                Large radius
-              </Button>
-              <Button
-                variant={settings.cardStyle.radius === "rounded" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() =>
-                  updateSettings((current) => ({
-                    ...current,
-                    cardStyle: { ...current.cardStyle, radius: "rounded" }
-                  }))
-                }
-              >
-                Rounded
-              </Button>
-              <Button
-                variant={settings.cardStyle.radius === "soft" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() =>
-                  updateSettings((current) => ({
-                    ...current,
-                    cardStyle: { ...current.cardStyle, radius: "soft" }
-                  }))
-                }
-              >
-                Soft corners
-              </Button>
-              <Button
-                variant={settings.cardStyle.density === "compact" ? "primary" : "secondary"}
-                size="sm"
-                onClick={() =>
-                  updateSettings((current) => ({
-                    ...current,
-                    cardStyle: {
-                      ...current.cardStyle,
-                      density: current.cardStyle.density === "compact" ? "relaxed" : "compact"
-                    }
-                  }))
-                }
-              >
-                {settings.cardStyle.density === "compact" ? "Relaxed" : "Compact"}
-              </Button>
-            </div>
-          </details>
-
-          <details className="group rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
+                              <details className="group rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-plum-700">
@@ -900,7 +826,7 @@ export function WallStudioPage() {
                 ⌄
               </span>
             </summary>
-            <div className="mt-4 grid gap-4">
+            <div className="mt-5 grid gap-4">
               <label className="grid gap-2 text-sm text-charcoal-900/68">
                 Layout mode
                 <Select
@@ -908,36 +834,24 @@ export function WallStudioPage() {
                   onChange={(event) =>
                     updateSettings((current) => ({
                       ...current,
-                      layout: { ...current.layout, mode: event.target.value as WishWallSettings["layout"]["mode"] }
+                      layout: {
+                        ...current.layout,
+                        mode: event.target.value as WishWallSettings["layout"]["mode"]
+                      }
                     }))
                   }
                 >
-                  <SelectOption value="masonry">Masonry</SelectOption>
-                  <SelectOption value="grid">Grid</SelectOption>
-                  <SelectOption value="stack">Stack</SelectOption>
+                  {layoutModeOptions.map((option) => (
+                    <SelectOption key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectOption>
+                  ))}
                 </Select>
               </label>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {[2, 3, 4].map((columns) => (
-                  <Button
-                    key={columns}
-                    variant={settings.layout.columns === columns ? "primary" : "secondary"}
-                    size="sm"
-                    onClick={() =>
-                      updateSettings((current) => ({
-                        ...current,
-                        layout: { ...current.layout, columns: columns as 2 | 3 | 4 }
-                      }))
-                    }
-                  >
-                    {columns} cols
-                  </Button>
-                ))}
-              </div>
+
             </div>
           </details>
-
-          <details className="group rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
+<details className="group rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-plum-700">
@@ -1088,3 +1002,7 @@ export function WallStudioPage() {
     </DashboardLayout>
   );
 }
+
+
+
+

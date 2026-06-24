@@ -65,11 +65,11 @@ export function PublicEventLayout({
           <div className="grid gap-5 p-6 sm:p-8 lg:grid-cols-[1.3fr_0.7fr]">
             <div className="rounded-[28px] border border-plum-700/10 bg-cream-50 p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-plum-700">
-                Event Story
+                Celebration story
               </p>
               <p className="mt-3 text-sm leading-7 text-charcoal-900/72">
-                This layout is designed to feel personal and shareable, with a
-                hero treatment that works across desktop, tablet, and mobile web.
+                Visitors can leave wishes, memories, and gifts in one warm place that feels easy to
+                share on desktop and mobile web.
               </p>
             </div>
             <div className="rounded-[28px] border border-plum-700/10 bg-white/90 p-5">

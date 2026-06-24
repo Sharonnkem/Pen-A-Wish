@@ -25,7 +25,15 @@ const exportSchema = z.object({
 
 const layoutSchema = z.object({
   columns: z.union([z.literal(2), z.literal(3), z.literal(4)]),
-  mode: z.enum(["masonry", "grid", "stack"])
+  mode: z.enum([
+    "collageScrapbook",
+    "letterTimeline",
+    "buntingGarland",
+    "openJournal",
+    "masonry",
+    "grid",
+    "stack"
+  ])
 });
 
 const typographySchema = z.object({

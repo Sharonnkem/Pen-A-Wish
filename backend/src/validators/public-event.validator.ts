@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 export const publicWishSchema = z.object({
-  message: z.string().trim().min(1).max(1500),
+  message: z
+    .string()
+    .trim()
+    .min(1)
+    .max(280, "Wishes are limited to 280 characters. Please use the Guestbook for longer messages."),
   senderEmail: z.string().email().optional().or(z.literal("")).transform((value) => value || undefined),
   senderName: z.string().trim().min(2).max(150)
 });

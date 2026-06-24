@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS events (
   cover_image_url TEXT,
   description TEXT,
   is_public BOOLEAN DEFAULT TRUE,
+  show_public_recent_wishes BOOLEAN NOT NULL DEFAULT FALSE,
+  show_public_recent_guestbook BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );

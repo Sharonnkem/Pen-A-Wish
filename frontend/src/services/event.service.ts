@@ -71,7 +71,7 @@ export const eventService = {
           wishesCount: number;
         };
       };
-    }>(`/public/events/${slug}`);
+  }>(`/public/events/${slug}`);
   },
   getPublicWishWallBySlug(slug: string) {
     return apiClient.get<{

@@ -11,6 +11,8 @@ export const eventSchema = z.object({
     .regex(datePattern, "Event date must be in YYYY-MM-DD format"),
   eventType: z.string().trim().min(2).max(80),
   profileImageUrl: z.string().url().optional().nullable(),
+  showPublicRecentGuestbook: z.boolean().optional().default(false),
+  showPublicRecentWishes: z.boolean().optional().default(false),
   title: z.string().trim().min(2).max(200)
 });
 

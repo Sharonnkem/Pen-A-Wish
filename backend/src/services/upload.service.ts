@@ -1,5 +1,6 @@
 import { cloudinary } from "../config/cloudinary.js";
 import { AppError } from "../utils/app-error.js";
+import { Readable } from "node:stream";
 
 const allowedFolders = new Set(["avatars", "events", "covers"]);
 
@@ -17,16 +18,41 @@ export const uploadService = {
       throw new AppError("Only image uploads are allowed", 400);
     }
 
-    const base64 = input.buffer.toString("base64");
-    const dataUri = `data:${input.mimetype};base64,${base64}`;
-    const result = await cloudinary.uploader.upload(dataUri, {
-      folder: `pen-a-wish/${input.folder}`,
-      resource_type: "image"
-    });
+    try {
+      const result = await new Promise<{
+        public_id: string;
+        secure_url: string;
+      }>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: `pen-a-wish/${input.folder}`,
+            resource_type: "image"
+          },
+          (error, result) => {
+            if (error) {
+              reject(error);
+              return;
+            }
 
-    return {
-      publicId: result.public_id,
-      url: result.secure_url
-    };
+            if (!result) {
+              reject(new Error("Cloudinary did not return an upload result"));
+              return;
+            }
+
+            resolve(result);
+          }
+        );
+
+        Readable.from(input.buffer).pipe(uploadStream);
+      });
+
+      return {
+        publicId: result.public_id,
+        url: result.secure_url
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Image upload failed";
+      throw new AppError(`Cloudinary upload failed: ${message}`, 502);
+    }
   }
 };

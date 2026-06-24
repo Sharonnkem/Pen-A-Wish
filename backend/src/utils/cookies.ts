@@ -2,16 +2,22 @@ import type { Response } from "express";
 
 import { env } from "../config/env.js";
 
+function isLocalOrigin(origin: string) {
+  return /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+}
+
 function getCookieSettings(maxAge: number) {
-  const isProduction = env.nodeEnv === "production";
-  const sameSite: "none" | "lax" = isProduction ? "none" : "lax";
+  const isCrossOriginFrontend = env.frontendOrigins.some((origin) => !isLocalOrigin(origin));
+  const shouldUseCrossSiteCookies = env.nodeEnv === "production" || isCrossOriginFrontend;
+  const sameSite: "none" | "lax" = shouldUseCrossSiteCookies ? "none" : "lax";
+  const secure = shouldUseCrossSiteCookies;
 
   return {
     httpOnly: true,
     maxAge,
     path: "/",
     sameSite,
-    secure: isProduction
+    secure
   };
 }
 

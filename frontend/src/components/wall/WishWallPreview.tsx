@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from "react";
+
 import type { PublicWishPreview } from "../../types/event";
 import type { WishWallSettings } from "../../types/wish-wall";
 import { cn } from "../../utils/cn";
@@ -70,30 +72,101 @@ function getRotation(index: number) {
   return values[index % values.length];
 }
 
+function getWallStyleLabel(mode: WishWallSettings["layout"]["mode"]) {
+  switch (mode) {
+    case "collageScrapbook":
+      return "Collage Scrapbook";
+    case "letterTimeline":
+      return "Letter Timeline";
+    case "buntingGarland":
+      return "Bunting Garland";
+    case "openJournal":
+      return "Open Journal";
+    case "masonry":
+      return "Collage Scrapbook";
+    case "grid":
+      return "Letter Timeline";
+    case "stack":
+      return "Open Journal";
+    default:
+      return "Collage Scrapbook";
+  }
+}
+
 function getLayoutClass(settings: WishWallSettings) {
-  if (settings.layout.mode === "stack") {
-    return "grid gap-4 max-w-3xl";
+  switch (settings.layout.mode) {
+    case "letterTimeline":
+      return "relative flex flex-col gap-y-1 py-6";
+    case "buntingGarland":
+      return "relative flex flex-wrap items-start justify-center gap-x-0 gap-y-12 pb-20 pt-12";
+    case "openJournal":
+      return "relative grid gap-6 lg:grid-cols-2 lg:gap-x-8";
+    case "grid":
+      return cn(
+        "grid gap-4 sm:grid-cols-2",
+        settings.layout.columns === 2
+          ? "xl:grid-cols-2"
+          : settings.layout.columns === 4
+            ? "xl:grid-cols-4"
+            : "xl:grid-cols-3"
+      );
+    case "stack":
+      return "grid gap-4 max-w-3xl";
+    case "collageScrapbook":
+    default:
+      return "relative w-full";
+  }
+}
+
+function getLayoutItemClass(settings: WishWallSettings, index: number) {
+  switch (settings.layout.mode) {
+    case "letterTimeline":
+      return cn(
+        "w-full max-w-[18rem] lg:col-span-1",
+        index % 2 === 0
+          ? "lg:col-start-1 lg:justify-self-end"
+          : "lg:col-start-3 lg:justify-self-start"
+      );
+    case "buntingGarland":
+      return cn(
+        "flex-none w-[10.25rem] -mx-1",
+        index % 4 === 0
+          ? "-translate-y-4"
+          : index % 4 === 1
+            ? "translate-y-7"
+            : index % 4 === 2
+              ? "translate-y-2"
+              : "translate-y-8"
+      );
+    case "openJournal":
+      return cn(
+        "w-full max-w-[30rem]",
+        index % 2 === 0 ? "lg:justify-self-end" : "lg:justify-self-start"
+      );
+    case "stack":
+      return "w-full";
+    case "grid":
+    case "collageScrapbook":
+    default:
+      return "w-full";
+  }
+}
+
+function getLayoutRotation(mode: WishWallSettings["layout"]["mode"], index: number) {
+  if (mode === "letterTimeline") {
+    return 0;
   }
 
-  const columnsClass =
-    settings.layout.columns === 2
-      ? "xl:columns-2"
-      : settings.layout.columns === 4
-        ? "xl:columns-4"
-        : "xl:columns-3";
-
-  if (settings.layout.mode === "grid") {
-    return cn(
-      "grid gap-4 sm:grid-cols-2",
-      settings.layout.columns === 2
-        ? "xl:grid-cols-2"
-        : settings.layout.columns === 4
-          ? "xl:grid-cols-4"
-          : "xl:grid-cols-3"
-    );
+  if (mode === "buntingGarland") {
+    const values = [-1.6, 1.2, -0.8, 1];
+    return values[index % values.length];
   }
 
-  return cn("columns-1 gap-5 sm:columns-2", columnsClass);
+  if (mode === "openJournal") {
+    return index % 2 === 0 ? -0.6 : 0.6;
+  }
+
+  return getRotation(index);
 }
 
 function WishCard({
@@ -106,6 +179,7 @@ function WishCard({
   settings,
   styleVariant,
   theme,
+  layoutMode,
   wish
 }: {
   cardTone: string;
@@ -117,6 +191,7 @@ function WishCard({
   settings: WishWallSettings;
   styleVariant: (typeof palette)[number];
   theme: (typeof themeAccents)[WishWallSettings["themePreset"]];
+  layoutMode: WishWallSettings["layout"]["mode"];
   wish: PublicWishPreview;
 }) {
   const cardClassName = cn(
@@ -125,8 +200,85 @@ function WishCard({
     cardTone,
     settings.cardStyle.style === "glass" && !exportMode ? "backdrop-blur-xl" : "",
     exportMode ? "shadow-none" : "",
-    settings.layout.mode === "stack" ? "w-full" : ""
+    layoutMode === "stack" ? "w-full" : "",
+    layoutMode === "letterTimeline" ? "w-full max-w-[28rem]" : "",
+    layoutMode === "openJournal" ? "w-full max-w-[30rem]" : "",
+    layoutMode === "buntingGarland" ? "w-full max-w-[18rem]" : ""
   );
+
+  if (layoutMode === "collageScrapbook") {
+    return (
+      <article
+        className={cn(
+          "relative overflow-hidden bg-[#fbf5ec] px-4 py-4 shadow-[0_16px_34px_rgba(67,34,53,0.08)]",
+          exportMode ? "shadow-none" : ""
+        )}
+        style={{
+          clipPath:
+            "polygon(4% 1%, 12% 0%, 22% 3%, 34% 1%, 48% 4%, 63% 1%, 78% 3%, 92% 0%, 100% 9%, 98% 22%, 100% 37%, 97% 51%, 100% 66%, 98% 82%, 100% 94%, 92% 100%, 78% 97%, 64% 99%, 49% 96%, 34% 99%, 20% 97%, 7% 100%, 0 92%, 2% 78%, 0 63%, 3% 48%, 0 34%, 2% 20%, 0 7%)",
+          backgroundImage:
+            "linear-gradient(180deg, rgba(255,255,255,0.68) 0%, rgba(255,255,255,0.18) 100%), radial-gradient(circle at top left, rgba(255,255,255,0.55), transparent 38%)",
+          transform: `rotate(${rotation}deg)`
+        }}
+      >
+        <div className="pointer-events-none absolute inset-0 opacity-40" style={{ backgroundImage: "repeating-linear-gradient(0deg, rgba(131, 106, 74, 0.03) 0, rgba(131, 106, 74, 0.03) 1px, transparent 1px, transparent 9px)" }} />
+        {(wish.senderName.toLowerCase().includes("tunde") || wish.senderName.toLowerCase().includes("james")) ? (
+          <div
+            className="pointer-events-none absolute left-0 top-0 h-full w-8 bg-[#7b2f4c]/85"
+            style={{ clipPath: "polygon(0 0, 100% 10%, 92% 100%, 0 92%)", filter: "drop-shadow(2px 0 4px rgba(67,34,53,0.12))" }}
+          />
+        ) : null}
+        <div className="relative pt-4">
+          <p className="text-[0.66rem] font-semibold uppercase tracking-[0.24em] text-[#a88a6b]">{wish.senderName}</p>
+          <p
+            className={cn(
+              "mt-2 font-normal italic leading-6 text-[#2f2f2f]",
+              isCompact ? "text-[13px]" : "text-[14px]"
+            )}
+            style={{ fontFamily: getTypographyFont(settings.typography.bodyFont) }}
+          >
+            {wish.message}
+          </p>
+        </div>
+      </article>
+    );
+  }
+
+  if (layoutMode === "buntingGarland") {
+    return (
+      <article
+        className={cn(
+          "relative mb-5 break-inside-avoid overflow-hidden bg-[#fefcfa] px-4 pb-6 pt-4 shadow-[0_20px_48px_rgba(67,34,53,0.1)]",
+          exportMode ? "shadow-none" : "",
+          "w-full max-w-[10.75rem]"
+        )}
+        style={{
+          clipPath: "polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%)",
+          transform: `rotate(${rotation}deg)`
+        }}
+      >
+        <div className="pointer-events-none absolute left-1/2 top-0 h-6 w-px -translate-x-1/2 -translate-y-[1px] bg-[#d8b98f]/80" />
+        <div
+          className="pointer-events-none absolute left-1/2 top-2 h-[2px] w-[calc(100%+2.5rem)] -translate-x-1/2"
+          style={{
+            backgroundImage: "repeating-linear-gradient(90deg, rgba(216,185,143,0.95) 0 8px, transparent 8px 14px)"
+          }}
+        />
+        <div className="relative pt-6">
+          <p className="text-[0.66rem] font-semibold uppercase tracking-[0.24em] text-[#a88a6b]">{wish.senderName}</p>
+          <p
+            className={cn(
+              "mt-2 font-normal italic leading-6 text-[#2f2f2f]",
+              isCompact ? "text-[13px]" : "text-[14px]"
+            )}
+            style={{ fontFamily: getTypographyFont(settings.typography.bodyFont) }}
+          >
+            {wish.message}
+          </p>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className={cardClassName} style={{ transform: `rotate(${rotation}deg)` }}>
@@ -229,10 +381,15 @@ export function WishWallPreview({
   settings,
   wishes
 }: WishWallPreviewProps) {
+  const [timelinePage, setTimelinePage] = useState(0);
+  const [collagePage, setCollagePage] = useState(0);
+  const [buntingPage, setBuntingPage] = useState(0);
+  const [journalPage, setJournalPage] = useState(0);
   const theme = themeAccents[settings.themePreset];
   const headingFont = getTypographyFont(settings.typography.headingFont);
   const bodyFont = getTypographyFont(settings.typography.bodyFont);
   const cardTone = styleClasses[settings.cardStyle.style];
+  const wallStyle = settings.layout.mode;
   const hasBackgroundImage = settings.background.mode === "image" && settings.background.imageUrl;
   const backgroundStyle =
     settings.background.mode === "solid"
@@ -246,6 +403,71 @@ export function WishWallPreview({
         : {
             backgroundImage: `linear-gradient(180deg, ${settings.background.gradientStart} 0%, ${settings.background.gradientEnd} 100%)`
           };
+  const timelinePageSize = 4;
+  const totalTimelinePages = Math.max(1, Math.ceil(wishes.length / timelinePageSize));
+  const collagePageSize = 9;
+  const totalCollagePages = Math.max(1, Math.ceil(wishes.length / collagePageSize));
+  const buntingPageSize = 8;
+  const totalBuntingPages = Math.max(1, Math.ceil(wishes.length / buntingPageSize));
+  const journalPageSize = 8;
+  const totalJournalPages = Math.max(1, Math.ceil(wishes.length / journalPageSize));
+  const timelineWishes = useMemo(() => {
+    if (wallStyle !== "letterTimeline") {
+      return wishes;
+    }
+
+    const start = timelinePage * timelinePageSize;
+    return wishes.slice(start, start + timelinePageSize);
+  }, [timelinePage, timelinePageSize, wallStyle, wishes]);
+
+  const collageWishes = useMemo(() => {
+    if (wallStyle !== "collageScrapbook") {
+      return wishes;
+    }
+
+    const start = collagePage * collagePageSize;
+    return wishes.slice(start, start + collagePageSize);
+  }, [collagePage, collagePageSize, wallStyle, wishes]);
+  const buntingWishes = useMemo(() => {
+    if (wallStyle !== "buntingGarland") {
+      return wishes;
+    }
+
+    const start = buntingPage * buntingPageSize;
+    return wishes.slice(start, start + buntingPageSize);
+  }, [buntingPage, buntingPageSize, wallStyle, wishes]);
+  const journalWishes = useMemo(() => {
+    if (wallStyle !== "openJournal") {
+      return wishes;
+    }
+
+    const start = journalPage * journalPageSize;
+    return wishes.slice(start, start + journalPageSize);
+  }, [journalPage, journalPageSize, wallStyle, wishes]);
+
+  useEffect(() => {
+    if (timelinePage > totalTimelinePages - 1) {
+      setTimelinePage(Math.max(0, totalTimelinePages - 1));
+    }
+  }, [timelinePage, totalTimelinePages]);
+
+  useEffect(() => {
+    if (collagePage > totalCollagePages - 1) {
+      setCollagePage(Math.max(0, totalCollagePages - 1));
+    }
+  }, [collagePage, totalCollagePages]);
+
+  useEffect(() => {
+    if (buntingPage > totalBuntingPages - 1) {
+      setBuntingPage(Math.max(0, totalBuntingPages - 1));
+    }
+  }, [buntingPage, totalBuntingPages]);
+
+  useEffect(() => {
+    if (journalPage > totalJournalPages - 1) {
+      setJournalPage(Math.max(0, totalJournalPages - 1));
+    }
+  }, [journalPage, totalJournalPages]);
 
   return (
     <section
@@ -309,11 +531,11 @@ export function WishWallPreview({
           <div className="rounded-[26px] border border-white/70 bg-white/82 p-4 shadow-card">
             <p className="text-xs uppercase tracking-[0.22em] text-plum-700">Layout</p>
             <p className="mt-3 text-2xl text-plum-800" style={{ fontFamily: headingFont }}>
-              {settings.layout.mode}
+              {getWallStyleLabel(wallStyle)}
             </p>
           </div>
           <div className="rounded-[26px] border border-white/70 bg-white/82 p-4 shadow-card">
-            <p className="text-xs uppercase tracking-[0.22em] text-plum-700">Card style</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-plum-700">Wall Style</p>
             <p className="mt-3 text-2xl text-plum-800" style={{ fontFamily: headingFont }}>
               {settings.cardStyle.style}
             </p>
@@ -321,32 +543,304 @@ export function WishWallPreview({
         </div>
       ) : null}
 
-      <div className={getLayoutClass(settings)}>
-        {wishes.length ? (
-          wishes.map((wish, index) => (
-            <WishCard
-              key={wish.id}
-              cardTone={cardTone}
-              exportMode={exportMode}
-              isCompact={settings.cardStyle.density === "compact"}
-              onRemoveWish={onRemoveWish}
-              removingWishId={removingWishId}
-              rotation={getRotation(index)}
-              settings={settings}
-              styleVariant={palette[index % palette.length]}
-              theme={theme}
-              wish={wish}
-            />
-          ))
-        ) : (
-          <div className="rounded-[30px] border border-dashed border-plum-700/18 bg-white/70 p-8 text-center text-sm text-charcoal-900/68">
-            <p className="text-lg font-semibold text-charcoal-900">Waiting for the first wish</p>
-            <p className="mt-2">
-              The editor is ready. As wishes arrive, they will appear here as scrapbook-style cards.
-            </p>
+      {wallStyle === "openJournal" ? (
+        <div className="overflow-hidden rounded-[34px] border border-[#e1caa6] bg-[#f1debf] p-5 shadow-[0_24px_72px_rgba(67,34,53,0.12)]">
+          <p className="mb-4 text-center text-[0.82rem] italic text-plum-700/88" style={{ fontFamily: headingFont }}>
+            A keepsake you could almost hold
+          </p>
+          <div className="grid overflow-hidden rounded-[28px] border border-white/55 bg-[#fbf7ef] shadow-[0_20px_48px_rgba(67,34,53,0.12)] lg:grid-cols-2">
+            {[
+              {
+                number: "- 1 -",
+                title: `- wishes for ${celebrantName} -`,
+                items: journalWishes.slice(0, Math.ceil(journalWishes.length / 2))
+              },
+              {
+                number: "- 2 -",
+                title: "- continued -",
+                items: journalWishes.slice(Math.ceil(journalWishes.length / 2))
+              }
+            ].map((page, pageIndex) => (
+              <section
+                key={page.title}
+                className={`relative min-h-[26rem] px-5 py-5 sm:px-6 ${pageIndex === 0 ? "lg:border-r lg:border-[#edd8bc]" : ""}`}
+              >
+                <p className="text-center text-[1.05rem] italic text-plum-700" style={{ fontFamily: headingFont }}>
+                  {page.title}
+                </p>
+                <div className="mt-5 space-y-4">
+                  {page.items.length ? (
+                    page.items.map((wish, index) => (
+                      <div key={wish.id} className="pb-4">
+                        <p className="text-xs uppercase tracking-[0.24em] text-charcoal-900/42">
+                          {wish.senderName}
+                        </p>
+                        <p
+                          className="mt-2 font-normal italic text-[1rem] leading-7 text-plum-800"
+                          style={{ fontFamily: getTypographyFont(settings.typography.bodyFont) }}
+                        >
+                          {wish.message}
+                        </p>
+                        {index < page.items.length - 1 ? (
+                          <div className="mt-4 border-b border-dashed border-[#e7cfa8]" />
+                        ) : null}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-[22px] border border-dashed border-plum-700/14 bg-white/72 p-6 text-center text-sm text-charcoal-900/60">
+                      No wishes yet.
+                    </div>
+                  )}
+                </div>
+                <p className="absolute bottom-4 right-5 text-xs italic text-charcoal-900/48">{page.number}</p>
+              </section>
+            ))}
           </div>
-        )}
-      </div>
+          {!exportMode && totalJournalPages > 1 ? (
+            <div className="mt-4 flex items-center justify-center gap-3">
+              <button
+                className="inline-flex h-10 items-center rounded-full border border-[#ead9c2] bg-white/84 px-4 text-sm text-plum-800 shadow-[0_8px_18px_rgba(67,34,53,0.06)] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+                disabled={journalPage === 0}
+                type="button"
+                onClick={() => setJournalPage((value) => Math.max(0, value - 1))}
+              >
+                Prev
+              </button>
+              <span className="text-xs uppercase tracking-[0.22em] text-charcoal-900/55">
+                Page {journalPage + 1} of {totalJournalPages}
+              </span>
+              <button
+                className="inline-flex h-10 items-center rounded-full border border-[#ead9c2] bg-white/84 px-4 text-sm text-plum-800 shadow-[0_8px_18px_rgba(67,34,53,0.06)] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+                disabled={journalPage >= totalJournalPages - 1}
+                type="button"
+                onClick={() => setJournalPage((value) => Math.min(totalJournalPages - 1, value + 1))}
+              >
+                Next
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className={getLayoutClass(settings)}>
+          {wallStyle === "collageScrapbook" ? (
+            <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {collageWishes.length ? (
+                collageWishes.map((wish, index) => (
+                  <div
+                    key={wish.id}
+                    className={cn(
+                      "transform",
+                      index % 3 === 0 ? "sm:-mt-1 sm:rotate-[-1.5deg]" : "",
+                      index % 3 === 1 ? "sm:mt-4 sm:rotate-[1.2deg]" : "",
+                      index % 3 === 2 ? "sm:-mt-2 sm:rotate-[-0.8deg]" : ""
+                    )}
+                  >
+                    <WishCard
+                      cardTone={cardTone}
+                      exportMode={exportMode}
+                      isCompact={settings.cardStyle.density === "compact"}
+                      onRemoveWish={onRemoveWish}
+                      removingWishId={removingWishId}
+                      rotation={getLayoutRotation(wallStyle, index)}
+                      settings={settings}
+                      styleVariant={palette[index % palette.length]}
+                      theme={theme}
+                      layoutMode={wallStyle}
+                      wish={wish}
+                    />
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-[30px] border border-dashed border-[#e2c29d] bg-white/62 p-8 text-center text-sm text-charcoal-900/68">
+                  <p className="text-lg font-semibold text-charcoal-900">Waiting for the first wish</p>
+                  <p className="mt-2">This scrapbook will fill with torn paper notes as wishes arrive.</p>
+                </div>
+              )}
+              {!exportMode && totalCollagePages > 1 ? (
+                <div className="col-span-full mt-2 flex items-center justify-center gap-3">
+                  <button
+                    className="inline-flex h-9 items-center rounded-full border border-[#ead9c2] bg-white/84 px-4 text-xs font-semibold uppercase tracking-[0.18em] text-plum-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+                    disabled={collagePage === 0}
+                    type="button"
+                    onClick={() => setCollagePage((value) => Math.max(0, value - 1))}
+                  >
+                    Prev
+                  </button>
+                  <span className="text-[0.68rem] uppercase tracking-[0.22em] text-charcoal-900/55">
+                    Page {collagePage + 1} of {totalCollagePages}
+                  </span>
+                  <button
+                    className="inline-flex h-9 items-center rounded-full border border-[#ead9c2] bg-white/84 px-4 text-xs font-semibold uppercase tracking-[0.18em] text-plum-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+                    disabled={collagePage >= totalCollagePages - 1}
+                    type="button"
+                    onClick={() => setCollagePage((value) => Math.min(totalCollagePages - 1, value + 1))}
+                  >
+                    Next
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : wallStyle === "letterTimeline" ? (
+            <>
+              <div className="pointer-events-none absolute left-1/2 top-2 hidden h-[calc(100%-1rem)] w-px -translate-x-1/2 bg-[#c78f68] lg:block" />
+              {timelineWishes.length ? (
+                timelineWishes.map((wish, index) => {
+                  const isLeft = index % 2 === 0;
+
+                  return (
+                    <div
+                      key={wish.id}
+                      className="relative grid w-full gap-4 py-5 lg:grid-cols-2 lg:gap-x-12 lg:py-5"
+                    >
+                      <div
+                        className={cn(
+                          "w-full max-w-[280px] lg:self-center",
+                          isLeft ? "lg:col-start-1 lg:justify-self-end" : "lg:col-start-2 lg:justify-self-start"
+                        )}
+                      >
+                        <WishCard
+                          cardTone={cardTone}
+                          exportMode={exportMode}
+                          isCompact={settings.cardStyle.density === "compact"}
+                          onRemoveWish={onRemoveWish}
+                          removingWishId={removingWishId}
+                          rotation={0}
+                          settings={settings}
+                          styleVariant={palette[index % palette.length]}
+                          theme={theme}
+                          layoutMode={wallStyle}
+                          wish={wish}
+                        />
+                      </div>
+
+                      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:flex">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full border border-[#f0e0ca] bg-[#f8f1ea] shadow-[0_8px_18px_rgba(67,34,53,0.08)]">
+                          <span className="h-2.5 w-2.5 rounded-full bg-[#7f3650]" />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="rounded-[30px] border border-dashed border-plum-700/18 bg-white/70 p-8 text-center text-sm text-charcoal-900/68 lg:col-span-2">
+                  <p className="text-lg font-semibold text-charcoal-900">Waiting for the first wish</p>
+                  <p className="mt-2">
+                    The timeline is ready. As wishes arrive, they will appear here as floating letters.
+                  </p>
+                </div>
+              )}
+              {!exportMode && totalTimelinePages > 1 ? (
+                <div className="mt-2 flex items-center justify-center gap-3">
+                  <button
+                    className="inline-flex h-10 items-center rounded-full border border-[#ead9c2] bg-white/84 px-4 text-sm text-plum-800 shadow-[0_8px_18px_rgba(67,34,53,0.06)] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+                    disabled={timelinePage === 0}
+                    type="button"
+                    onClick={() => setTimelinePage((value) => Math.max(0, value - 1))}
+                  >
+                    Prev
+                  </button>
+                  <span className="text-xs uppercase tracking-[0.22em] text-charcoal-900/55">
+                    Page {timelinePage + 1} of {totalTimelinePages}
+                  </span>
+                  <button
+                    className="inline-flex h-10 items-center rounded-full border border-[#ead9c2] bg-white/84 px-4 text-sm text-plum-800 shadow-[0_8px_18px_rgba(67,34,53,0.06)] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+                    disabled={timelinePage >= totalTimelinePages - 1}
+                    type="button"
+                    onClick={() => setTimelinePage((value) => Math.min(totalTimelinePages - 1, value + 1))}
+                  >
+                    Next
+                  </button>
+                </div>
+              ) : null}
+              <div className="pointer-events-none absolute bottom-0 left-1/2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full bg-[#4b4a49] shadow-[0_16px_30px_rgba(37,35,34,0.32)]">
+                <span className="text-lg leading-none text-white">↓</span>
+              </div>
+            </>
+          ) : wallStyle === "buntingGarland" ? (
+            <>
+              <div className="pointer-events-none absolute left-4 right-4 top-8 h-px border-t border-dashed border-plum-700/20" />
+              {buntingWishes.length ? (
+                buntingWishes.map((wish, index) => (
+                  <div key={wish.id} className={getLayoutItemClass(settings, index)}>
+                    <WishCard
+                      cardTone={cardTone}
+                      exportMode={exportMode}
+                      isCompact={settings.cardStyle.density === "compact"}
+                      onRemoveWish={onRemoveWish}
+                      removingWishId={removingWishId}
+                      rotation={getLayoutRotation(wallStyle, index)}
+                      settings={settings}
+                      styleVariant={palette[index % palette.length]}
+                      theme={theme}
+                      layoutMode={wallStyle}
+                      wish={wish}
+                    />
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-[30px] border border-dashed border-plum-700/18 bg-white/70 p-8 text-center text-sm text-charcoal-900/68 lg:col-span-2">
+                  <p className="text-lg font-semibold text-charcoal-900">Waiting for the first wish</p>
+                  <p className="mt-2">
+                    The editor is ready. As wishes arrive, they will appear here as scrapbook-style cards.
+                  </p>
+                </div>
+              )}
+              {!exportMode && totalBuntingPages > 1 ? (
+                <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center justify-center gap-3">
+                  <button
+                    className="inline-flex h-10 items-center rounded-full border border-[#ead9c2] bg-white/84 px-4 text-sm text-plum-800 shadow-[0_8px_18px_rgba(67,34,53,0.06)] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+                    disabled={buntingPage === 0}
+                    type="button"
+                    onClick={() => setBuntingPage((value) => Math.max(0, value - 1))}
+                  >
+                    Prev
+                  </button>
+                  <span className="text-xs uppercase tracking-[0.22em] text-charcoal-900/55">
+                    Page {buntingPage + 1} of {totalBuntingPages}
+                  </span>
+                  <button
+                    className="inline-flex h-10 items-center rounded-full border border-[#ead9c2] bg-white/84 px-4 text-sm text-plum-800 shadow-[0_8px_18px_rgba(67,34,53,0.06)] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+                    disabled={buntingPage >= totalBuntingPages - 1}
+                    type="button"
+                    onClick={() => setBuntingPage((value) => Math.min(totalBuntingPages - 1, value + 1))}
+                  >
+                    Next
+                  </button>
+                </div>
+              ) : null}
+            </>
+          ) : wishes.length ? (
+            wishes.map((wish, index) => (
+              <div key={wish.id} className={getLayoutItemClass(settings, index)}>
+                <WishCard
+                  cardTone={cardTone}
+                  exportMode={exportMode}
+                  isCompact={settings.cardStyle.density === "compact"}
+                  onRemoveWish={onRemoveWish}
+                  removingWishId={removingWishId}
+                  rotation={getLayoutRotation(wallStyle, index)}
+                  settings={settings}
+                  styleVariant={palette[index % palette.length]}
+                  theme={theme}
+                  layoutMode={wallStyle}
+                  wish={wish}
+                />
+              </div>
+            ))
+          ) : (
+            <div className="rounded-[30px] border border-dashed border-plum-700/18 bg-white/70 p-8 text-center text-sm text-charcoal-900/68 lg:col-span-2">
+              <p className="text-lg font-semibold text-charcoal-900">Waiting for the first wish</p>
+              <p className="mt-2">
+                The editor is ready. As wishes arrive, they will appear here as scrapbook-style cards.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }
+
+
+
+
