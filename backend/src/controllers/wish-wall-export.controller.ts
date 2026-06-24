@@ -28,15 +28,37 @@ function getSource(value: unknown): WishWallExportSource {
   return "wishes";
 }
 
+function getFrontendUrl(request: AuthenticatedRequest) {
+  const origin = request.headers.origin;
+
+  if (origin && typeof origin === "string") {
+    return origin;
+  }
+
+  const referer = request.headers.referer;
+
+  if (referer && typeof referer === "string") {
+    try {
+      return new URL(referer).origin;
+    } catch {
+      return undefined;
+    }
+  }
+
+  return undefined;
+}
+
 export async function exportWishWall(request: AuthenticatedRequest, response: Response) {
   const eventId = getRequiredRouteParam(request.params.id, "id");
   const format = getFormat(request.query.format);
   const source = getSource(request.query.source);
+  const frontendUrl = getFrontendUrl(request);
   const exported = await wishWallExportService.exportWishWall(
     eventId,
     format,
     request.authUser,
-    source
+    source,
+    frontendUrl
   );
 
   response.setHeader("Content-Type", exported.contentType);

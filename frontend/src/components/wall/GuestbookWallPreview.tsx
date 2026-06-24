@@ -248,6 +248,34 @@ function GuestbookCard({
     );
   }
 
+  if (layoutMode === "letterTimeline") {
+    return (
+      <article
+        className={cn(
+          "relative w-full overflow-hidden rounded-[18px] border border-white/78 bg-white/96 px-5 py-4 shadow-[0_14px_28px_rgba(67,34,53,0.09)]",
+          exportMode ? "shadow-none" : ""
+        )}
+        style={{ transform: "none" }}
+      >
+        <div className="pointer-events-none absolute inset-0 rounded-[18px]" style={{ backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,250,244,0.38) 100%)" }} />
+        <div className="relative">
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-[#a88a6b]">
+            {entry.senderName}
+          </p>
+          <p
+            className={cn(
+              "mt-3 text-[1rem] leading-7 text-[#2f2f2f]",
+              settings.cardStyle.density === "compact" ? "text-[0.95rem]" : "text-[1rem]"
+            )}
+            style={{ fontFamily: getTypographyFont(settings.typography.bodyFont) }}
+          >
+            {entry.message}
+          </p>
+        </div>
+      </article>
+    );
+  }
+
   if (layoutMode === "buntingGarland") {
     return (
       <article

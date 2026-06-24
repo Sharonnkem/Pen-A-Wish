@@ -30,7 +30,7 @@ export function PublicEventLayout({
             {coverSlot ?? (
               <div className="absolute inset-x-6 bottom-6 top-6 rounded-[30px] border border-white/20 bg-white/8 backdrop-blur-[2px]" />
             )}
-            <div className="relative z-10 flex h-full flex-col justify-between gap-10">
+            <div className="relative z-10 flex h-full flex-col justify-between gap-10 pb-40 sm:pb-0">
               <div className="flex items-start justify-between gap-4">
                 <span className="rounded-full bg-white/14 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-white">
                   Public Event Page
@@ -41,14 +41,14 @@ export function PublicEventLayout({
                 </div>
               </div>
 
-              <div className="max-w-3xl">
+              <div className="ml-auto max-w-3xl text-right">
                 <h1 className="font-display text-4xl leading-tight text-white sm:text-5xl">
                   {title}
                 </h1>
                 <p className="mt-4 max-w-2xl text-sm leading-7 text-white/82 sm:text-base">
                   {description}
                 </p>
-                <div className="mt-6 flex flex-wrap gap-3">
+                <div className="mt-6 flex flex-wrap justify-end gap-3 max-sm:flex-col max-sm:items-start max-sm:justify-start">
                   {ctaSlot ?? (
                     <>
                       <Button>Leave a wish</Button>

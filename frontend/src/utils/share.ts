@@ -20,9 +20,9 @@ export function buildCelebrationShareMessage({
   title
 }: CelebrationShareInput) {
   return [
-    `🎉 You’re invited to leave a special wish for ${celebrantName}'s ${title}!`,
-    `This ${eventType.toLowerCase()} celebration has a beautiful Wish Wall filled with love, memories, and kind words.`,
-    "Tap the link to leave your wish:",
+    `🎉 Leave a wish for ${celebrantName}'s ${title}.`,
+    `A ${eventType.toLowerCase()} Wish Wall filled with love and memories.`,
+    "Tap the link to join in:",
     publicUrl
   ].join("\n");
 }

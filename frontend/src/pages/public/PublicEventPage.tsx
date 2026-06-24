@@ -239,7 +239,7 @@ export function PublicEventPage() {
     const description =
       event.description ??
       `Leave wishes and memories for ${event.celebrantName}'s ${event.eventType.toLowerCase()} celebration.`;
-    const imageUrl = event.coverImageUrl ?? event.profileImageUrl ?? "";
+    const imageUrl = event.profileImageUrl ?? event.coverImageUrl ?? "";
     const pageUrl =
       typeof window === "undefined" ? `/events/${event.slug}` : window.location.href;
 
@@ -660,8 +660,8 @@ export function PublicEventPage() {
               alt={`${event.title} cover`}
               className="h-full w-full object-cover"
               src={
-                event.coverImageUrl ??
                 event.profileImageUrl ??
+                event.coverImageUrl ??
                 "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='600'%3E%3Crect width='1200' height='600' fill='%23f8eee4'/%3E%3Ctext x='600' y='300' text-anchor='middle' font-size='40' font-family='Georgia' fill='%23432235'%3EPen A Wish%3C/text%3E%3C/svg%3E"
               }
             />
@@ -688,8 +688,9 @@ export function PublicEventPage() {
           </div>
         }
         ctaSlot={
-          <>
+          <div className="grid w-full max-w-[19rem] grid-cols-2 gap-3 sm:flex sm:w-auto sm:max-w-none sm:flex-wrap sm:justify-end">
             <Button
+              className="justify-self-start sm:col-span-1"
               onClick={() =>
                 document
                   .getElementById("leave-wish")
@@ -700,19 +701,19 @@ export function PublicEventPage() {
             </Button>
             <Button
               variant="secondary"
-              className="bg-white/88"
+              className="justify-self-end bg-white/88 sm:translate-y-1"
               onClick={() => setIsGiftModalOpen(true)}
             >
               Send a gift
             </Button>
             <Button
               variant="secondary"
-              className="bg-white/82"
+              className="col-span-2 justify-self-start bg-white/82 sm:col-span-1 sm:-translate-y-1"
               onClick={() => setIsGuestbookModalOpen(true)}
             >
               Guestbook
             </Button>
-          </>
+          </div>
         }
         metaSlot={
           <div className="grid gap-3 text-sm text-charcoal-900/72">

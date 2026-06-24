@@ -54,7 +54,8 @@ export const wishWallExportService = {
     eventId: string,
     format: WishWallExportFormat,
     user: AuthUser,
-    source: WishWallExportSource
+    source: WishWallExportSource,
+    frontendUrl?: string
   ) {
     const event = await eventService.getEventForOwner(eventId, user);
     const baseEvent = {
@@ -127,7 +128,7 @@ export const wishWallExportService = {
         }
       });
 
-      const exportUrl = new URL("/exports/wish-wall", env.frontendUrl);
+      const exportUrl = new URL("/exports/wish-wall", frontendUrl ?? env.frontendUrl);
       exportUrl.searchParams.set("payload", encodePayload(payload));
 
       await page.goto(exportUrl.toString(), { waitUntil: "networkidle" });

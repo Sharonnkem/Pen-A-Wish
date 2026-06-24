@@ -52,16 +52,6 @@ const gradientPresets = [
   { label: "Golden Hour", from: "#fff8ef", to: "#f2dcc7" }
 ] as const;
 
-const themePresets: Array<{
-  label: string;
-  value: WishWallSettings["themePreset"];
-}> = [
-  { label: "Paper", value: "paper" },
-  { label: "Sunset", value: "sunset" },
-  { label: "Garden", value: "garden" },
-  { label: "Midnight", value: "midnight" }
-];
-
 const exportToggleKeys = [
   { key: "showHeader", label: "Header" },
   { key: "showStats", label: "Stats" },
@@ -96,80 +86,6 @@ function cloneSettings(settings: WishWallSettings): WishWallSettings {
     themePreset: settings.themePreset,
     typography: { ...settings.typography }
   };
-}
-
-function applyPreset(preset: WishWallSettings["themePreset"]): WishWallSettings {
-  switch (preset) {
-    case "sunset":
-      return {
-        ...defaultSettings,
-        background: {
-          color: "#fff7f0",
-          gradientEnd: "#f2dcc7",
-          gradientStart: "#fff7f0",
-          imageUrl: null,
-          mode: "gradient"
-        },
-        cardStyle: {
-          density: "relaxed",
-          radius: "large",
-          style: "glass"
-        },
-        layout: {
-          columns: 3,
-          mode: "collageScrapbook"
-        },
-        themePreset: "sunset"
-      };
-    case "garden":
-      return {
-        ...defaultSettings,
-        background: {
-          color: "#f7fbf8",
-          gradientEnd: "#e6efe5",
-          gradientStart: "#f7fbf8",
-          imageUrl: null,
-          mode: "gradient"
-        },
-        cardStyle: {
-          density: "relaxed",
-          radius: "rounded",
-          style: "linen"
-        },
-        typography: {
-          bodyFont: "sans",
-          headingFont: "serif"
-        },
-        themePreset: "garden"
-      };
-    case "midnight":
-      return {
-        ...defaultSettings,
-        background: {
-          color: "#efe8df",
-          gradientEnd: "#dfd2c5",
-          gradientStart: "#f8f3ec",
-          imageUrl: null,
-          mode: "gradient"
-        },
-        cardStyle: {
-          density: "compact",
-          radius: "soft",
-          style: "glass"
-        },
-        layout: {
-          columns: 2,
-          mode: "letterTimeline"
-        },
-        typography: {
-          bodyFont: "sans",
-          headingFont: "serif"
-        },
-        themePreset: "midnight"
-      };
-    default:
-      return cloneSettings(defaultSettings);
-  }
 }
 
 export function WallStudioPage() {
@@ -449,10 +365,6 @@ export function WallStudioPage() {
     setSaveState("saving");
   }
 
-  function applyThemePreset(preset: WishWallSettings["themePreset"]) {
-    updateSettings(() => applyPreset(preset));
-  }
-
   const actionMode = searchParams.get("mode");
 
   if (
@@ -555,32 +467,6 @@ export function WallStudioPage() {
                 ⌄
               </span>
             </summary>
-          </details>
-
-          <details className="group rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-plum-700">
-                  Theme presets
-                </p>
-                <p className="mt-2 text-sm text-charcoal-900/62">One-tap moods for the wall.</p>
-              </div>
-              <span className="text-2xl text-plum-700 transition-transform duration-200 group-open:rotate-180">
-                ⌄
-              </span>
-            </summary>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-              {themePresets.map((preset) => (
-                <Button
-                  key={preset.value}
-                  variant={settings.themePreset === preset.value ? "primary" : "secondary"}
-                  className="justify-start"
-                  onClick={() => applyThemePreset(preset.value)}
-                >
-                  {preset.label}
-                </Button>
-              ))}
-            </div>
           </details>
 
           <details className="group rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
