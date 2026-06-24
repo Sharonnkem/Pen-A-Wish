@@ -240,7 +240,7 @@ export function PublicEventPage() {
     const description =
       event.description ??
       `Leave wishes and memories for ${event.celebrantName}'s ${event.eventType.toLowerCase()} celebration.`;
-    const imageUrl = getCelebrationPreviewImageUrl(event.profileImageUrl, event.coverImageUrl);
+    const imageUrl = event.profileImageUrl ?? getCelebrationPreviewImageUrl(undefined, undefined);
     const pageUrl =
       typeof window === "undefined" ? `/events/${event.slug}` : window.location.href;
 
@@ -661,7 +661,6 @@ export function PublicEventPage() {
               alt={`${event.title} cover`}
               className="h-full w-full object-cover"
               src={
-                event.profileImageUrl ??
                 event.coverImageUrl ??
                 "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='600'%3E%3Crect width='1200' height='600' fill='%23f8eee4'/%3E%3Ctext x='600' y='300' text-anchor='middle' font-size='40' font-family='Georgia' fill='%23432235'%3EPen A Wish%3C/text%3E%3C/svg%3E"
               }
@@ -673,7 +672,6 @@ export function PublicEventPage() {
                 className="h-24 w-24 rounded-[28px] border-4 border-white/80 object-cover shadow-[0_20px_40px_rgba(31,29,31,0.18)]"
                 src={
                   event.profileImageUrl ??
-                  event.coverImageUrl ??
                   "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Crect width='240' height='240' rx='40' fill='%23fffaf4'/%3E%3Ctext x='120' y='128' text-anchor='middle' font-size='28' font-family='Georgia' fill='%23432235'%3EPen A Wish%3C/text%3E%3C/svg%3E"
                 }
               />
