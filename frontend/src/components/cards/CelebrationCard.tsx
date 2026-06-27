@@ -7,7 +7,7 @@ import { useToast } from "../common/Toast";
 import type { CelebrationEvent } from "../../types/event";
 import {
   buildCelebrationShareMessage,
-  getCelebrationPreviewImageUrl,
+  getDefaultSharePreviewImageUrl,
   getPublicEventUrl
 } from "../../utils/share";
 
@@ -128,7 +128,7 @@ export function CelebrationCard({
           <img
             alt={`${event.celebrantName} profile`}
             className="h-24 w-24 rounded-[24px] object-cover shadow-[0_12px_30px_rgba(67,34,53,0.12)]"
-            src={getCelebrationPreviewImageUrl(event.profileImageUrl, event.coverImageUrl)}
+            src={event.profileImageUrl ?? event.coverImageUrl ?? getDefaultSharePreviewImageUrl()}
           />
           <p className="text-sm font-medium text-charcoal-900">{event.celebrantName}</p>
         </div>
@@ -137,7 +137,7 @@ export function CelebrationCard({
           <img
             alt={`${event.title} cover`}
             className="h-44 w-full object-cover"
-            src={getCelebrationPreviewImageUrl(event.profileImageUrl, event.coverImageUrl)}
+            src={event.coverImageUrl ?? event.profileImageUrl ?? getDefaultSharePreviewImageUrl()}
           />
         </div>
       </div>

@@ -111,33 +111,13 @@ export function DashboardHomePage() {
             </div>
           </section>
 
-          <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-            <Card
-              title="Wallet summary"
-              description="A quick snapshot of available balance and total successful gift value."
-            >
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-[22px] bg-cream-50 p-5">
-                  <p className="text-sm text-charcoal-900/58">Available balance</p>
-                  <p className="mt-3 font-display text-3xl text-plum-800">
-                    {formatNairaFromKobo(overview.wallet.balanceKobo)}
-                  </p>
-                </div>
-                <div className="rounded-[22px] bg-cream-50 p-5">
-                  <p className="text-sm text-charcoal-900/58">Total gifts received</p>
-                  <p className="mt-3 font-display text-3xl text-plum-800">
-                    {formatNairaFromKobo(overview.wallet.totalGiftsReceivedKobo)}
-                  </p>
-                </div>
-              </div>
-            </Card>
-
+          <section className="grid gap-4">
             <Card
               tone="polaroid"
               title="Quick actions"
               description="The most common creator tasks, grouped into one polished control area."
             >
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 <Button onClick={() => navigate("/celebrations/new")}>Create celebration</Button>
                 <Button variant="secondary" onClick={() => navigate("/wallet")}>
                   Open wallet

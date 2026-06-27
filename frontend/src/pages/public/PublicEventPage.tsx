@@ -19,18 +19,7 @@ import { eventService } from "../../services/event.service";
 import { formatNairaFromKobo } from "../../utils/currency";
 import { getCelebrationPreviewImageUrl } from "../../utils/share";
 
-const reactionOptions = ["\u2764\uFE0F", "\uD83C\uDF89", "\uD83D\uDC4F", "\uD83E\uDD73"];
-const confettiPieces = [
-  { color: "bg-rose-300", delay: 0, driftX: -22, left: "10%", rotate: -20, y: -64 },
-  { color: "bg-amber-300", delay: 0.04, driftX: 18, left: "18%", rotate: 12, y: -92 },
-  { color: "bg-blush-300", delay: 0.08, driftX: -18, left: "28%", rotate: -8, y: -116 },
-  { color: "bg-sky-200", delay: 0.12, driftX: 22, left: "38%", rotate: 18, y: -88 },
-  { color: "bg-gold-400", delay: 0.16, driftX: -14, left: "50%", rotate: -12, y: -132 },
-  { color: "bg-amber-200", delay: 0.2, driftX: 20, left: "61%", rotate: 24, y: -102 },
-  { color: "bg-rose-200", delay: 0.24, driftX: -16, left: "73%", rotate: -18, y: -84 },
-  { color: "bg-cream-100", delay: 0.28, driftX: 14, left: "84%", rotate: 14, y: -58 }
-] as const;
-
+const reactionOptions = ["❤️", "🎉", "👏", "🥳"];
 const WISH_MESSAGE_LIMIT = 280;
 
 type PublicEventQueryData = Awaited<ReturnType<typeof eventService.getPublicEventBySlug>>;
@@ -42,24 +31,6 @@ type ReactionBurstState =
       targetType: "event" | "wish";
     }
   | null;
-
-function getCountdownLabel(eventDate: string) {
-  const now = new Date();
-  const target = new Date(eventDate);
-  const diffMs = target.getTime() - now.getTime();
-
-  if (diffMs <= 0) {
-    return "Today is the celebration";
-  }
-
-  const totalDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-  if (totalDays === 1) {
-    return "1 day to go";
-  }
-
-  return `${totalDays} days to go`;
-}
 
 function getVisitorFingerprint() {
   if (typeof window === "undefined") {
@@ -76,53 +47,6 @@ function getVisitorFingerprint() {
   const next = `visitor-${Math.random().toString(36).slice(2, 12)}`;
   window.localStorage.setItem(storageKey, next);
   return next;
-}
-
-function WishCelebrationBurst({ isVisible }: { isVisible: boolean }) {
-  return (
-    <AnimatePresence>
-      {isVisible ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-[32px]"
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 24 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 16 }}
-            transition={{ duration: 0.28, ease: "easeOut" }}
-            className="absolute inset-x-6 bottom-6 rounded-[26px] border border-white/70 bg-white/92 px-5 py-4 shadow-[0_20px_60px_rgba(67,34,53,0.16)] backdrop-blur"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-plum-700">
-              Wish delivered
-            </p>
-            <p className="mt-2 font-display text-2xl text-plum-800">
-              Your note is now part of this celebration.
-            </p>
-          </motion.div>
-
-          {confettiPieces.map((piece, index) => (
-            <motion.div
-              key={`${piece.left}-${index}`}
-              initial={{ opacity: 0, scale: 0.7, x: 0, y: 0, rotate: 0 }}
-              animate={{
-                opacity: [0, 1, 0],
-                rotate: [0, piece.rotate, piece.rotate * 1.5],
-                x: [0, piece.driftX, piece.driftX * 1.2],
-                y: [0, piece.y, piece.y - 12]
-              }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: piece.delay, duration: 1.15, ease: "easeOut" }}
-              className={`absolute bottom-20 h-4 w-4 rounded-[6px] ${piece.color} shadow-[0_8px_18px_rgba(67,34,53,0.12)]`}
-              style={{ left: piece.left }}
-            />
-          ))}
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
-  );
 }
 
 function EmojiReactionBurst({
@@ -166,10 +90,9 @@ export function PublicEventPage() {
   const [isGuestbookSuccessModalOpen, setIsGuestbookSuccessModalOpen] = useState(false);
   const [guestbookCelebrationTick, setGuestbookCelebrationTick] = useState(0);
   const [reactionBurst, setReactionBurst] = useState<ReactionBurstState>(null);
-  const [wishCelebrationTick, setWishCelebrationTick] = useState(0);
   const [isWishSuccessModalOpen, setIsWishSuccessModalOpen] = useState(false);
-    const [showRecentWishesPreview, setShowRecentWishesPreview] = useState(false);
-    const [showRecentGuestbookPreview, setShowRecentGuestbookPreview] = useState(false);
+  const [showRecentWishesPreview, setShowRecentWishesPreview] = useState(false);
+  const [showRecentGuestbookPreview, setShowRecentGuestbookPreview] = useState(false);
   const [recentWishesPage, setRecentWishesPage] = useState(1);
   const [recentGuestbookPage, setRecentGuestbookPage] = useState(1);
   const [guestbookForm, setGuestbookForm] = useState({
@@ -180,18 +103,6 @@ export function PublicEventPage() {
     message: "",
     senderName: ""
   });
-
-  useEffect(() => {
-    if (!wishCelebrationTick) {
-      return undefined;
-    }
-
-    const timer = window.setTimeout(() => {
-      setWishCelebrationTick(0);
-    }, 2400);
-
-    return () => window.clearTimeout(timer);
-  }, [wishCelebrationTick]);
 
   useEffect(() => {
     if (!guestbookCelebrationTick) {
@@ -221,12 +132,6 @@ export function PublicEventPage() {
     enabled: Boolean(slug),
     queryFn: () => eventService.getPublicEventBySlug(slug),
     queryKey: ["public-event", slug]
-  });
-
-  const reactionsQuery = useQuery({
-    enabled: Boolean(slug),
-    queryFn: () => eventService.getEventReactions(slug),
-    queryKey: ["public-event-reactions", slug]
   });
 
   useEffect(() => {
@@ -402,7 +307,6 @@ export function PublicEventPage() {
         message: "",
         senderName: ""
       });
-      setWishCelebrationTick(Date.now());
       queryClient.setQueryData<PublicEventQueryData>(
         ["public-event", slug],
         (current) =>
@@ -489,33 +393,6 @@ export function PublicEventPage() {
     }
   });
 
-  const reactionMutation = useMutation({
-    mutationFn: (reactionType: string) =>
-      eventService.submitEventReaction(slug, {
-        reactionType,
-        visitorFingerprint: getVisitorFingerprint()
-      }),
-    onError: (error) => {
-      showToast({
-        title: "Reaction could not be saved",
-        description:
-          error instanceof ApiError
-            ? error.message
-            : "We could not save your reaction right now. Please try again shortly.",
-        tone: "error"
-      });
-    },
-    onSuccess: async (response, reactionType) => {
-      setReactionBurst({
-        emoji: reactionType,
-        key: Date.now(),
-        targetId: slug,
-        targetType: "event"
-      });
-      queryClient.setQueryData(["public-event-reactions", slug], response);
-    }
-  });
-
   const wishReactionMutation = useMutation({
     mutationFn: (input: { reactionType: string; wishId: string }) =>
       eventService.submitWishReaction(input.wishId, {
@@ -567,7 +444,6 @@ export function PublicEventPage() {
   const event = eventData?.event;
   const recentGuestbookEntries = eventData?.recentGuestbookEntries ?? [];
   const recentWishes = eventData?.recentWishes ?? [];
-  const stats = eventData?.stats;
   const wishMessageLength = wishForm.message.length;
   const wishCharactersRemaining = WISH_MESSAGE_LIMIT - wishMessageLength;
   const isWishMessageOverLimit = wishMessageLength > WISH_MESSAGE_LIMIT;
@@ -576,9 +452,9 @@ export function PublicEventPage() {
     wishForm.senderName.trim().length >= 2 &&
     wishForm.message.trim().length > 0 &&
     !isWishMessageOverLimit;
-    const canShowRecentWishes = Boolean(event?.showPublicRecentWishes);
-    const canShowRecentGuestbook = Boolean(event?.showPublicRecentGuestbook);
-    const shouldShowRecentWishes = showRecentWishesPreview;
+  const canShowRecentWishes = Boolean(event?.showPublicRecentWishes);
+  const canShowRecentGuestbook = Boolean(event?.showPublicRecentGuestbook);
+  const shouldShowRecentWishes = showRecentWishesPreview;
   const hasVisibleRecentWishes = recentWishes.length > 0;
   const recentWishesPageSize = 4;
   const recentWishesTotalPages = Math.max(1, Math.ceil(recentWishes.length / recentWishesPageSize));
@@ -606,19 +482,6 @@ export function PublicEventPage() {
     setRecentWishesPage(1);
   }, [recentWishes.length, shouldShowRecentWishes]);
 
-  const celebrationStats = stats ?? {
-    giftsCount: 0,
-    guestbookCount: 0,
-    wishesCount: 0
-  };
-
-  const reactionCounts = useMemo(() => {
-    const counts = reactionsQuery.data?.data.counts ?? [];
-    return reactionOptions.map((reactionType) => ({
-      count: counts.find((count) => count.reactionType === reactionType)?.count ?? 0,
-      reactionType
-    }));
-  }, [reactionsQuery.data]);
   const parsedGiftAmountNaira = Number(giftForm.amountNaira);
   const safeGiftAmountNaira = Number.isFinite(parsedGiftAmountNaira)
     ? parsedGiftAmountNaira
@@ -647,8 +510,6 @@ export function PublicEventPage() {
       </main>
     );
   }
-
-  const countdownLabel = getCountdownLabel(event.eventDate);
 
   return (
     <PageTransition>
@@ -714,32 +575,11 @@ export function PublicEventPage() {
             </Button>
           </div>
         }
-        metaSlot={
-          <div className="grid gap-3 text-sm text-charcoal-900/72">
-            <div className="rounded-[20px] bg-cream-50 p-3">
-              <p className="font-semibold text-charcoal-900">Countdown</p>
-              <p className="mt-2">{countdownLabel}</p>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-[20px] bg-cream-50 p-3">
-                <p className="font-semibold text-charcoal-900">Wishes</p>
-                <p className="mt-2">{celebrationStats.wishesCount}</p>
-              </div>
-              <div className="rounded-[20px] bg-cream-50 p-3">
-                <p className="font-semibold text-charcoal-900">Memories</p>
-                <p className="mt-2">{celebrationStats.guestbookCount}</p>
-              </div>
-              <div className="rounded-[20px] bg-cream-50 p-3">
-                <p className="font-semibold text-charcoal-900">Gifts</p>
-                <p className="mt-2">{celebrationStats.giftsCount}</p>
-              </div>
-            </div>
-          </div>
-        }
       >
         <div className="space-y-6">
-          <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <section className="space-y-0">
             <Card
+              className="w-full"
               title="Celebrate this moment"
               description={`A warm invitation page for ${event.eventType.toLowerCase()} wishes, memories, and support.`}
             >
@@ -761,67 +601,6 @@ export function PublicEventPage() {
                   </p>
                 </div>
               </div>
-            </Card>
-
-            <Card
-              tone="polaroid"
-              className="relative"
-              title="Send a little love"
-              description="React to the page in one tap and let the celebrant feel the room around them."
-            >
-              <EmojiReactionBurst
-                key={reactionBurst?.key ?? 0}
-                emoji={reactionBurst?.emoji ?? ""}
-                isVisible={
-                  reactionBurst?.targetType === "event" && reactionBurst?.targetId === slug
-                }
-              />
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {reactionCounts.map((reaction) => (
-                  <motion.button
-                    key={reaction.reactionType}
-                    whileTap={{ scale: 0.96 }}
-                    whileHover={{ y: -2 }}
-                    className="rounded-[22px] border border-plum-700/10 bg-white/78 px-4 py-4 text-center shadow-[0_10px_30px_rgba(67,34,53,0.06)]"
-                    disabled={reactionMutation.isPending}
-                    onClick={() => reactionMutation.mutate(reaction.reactionType)}
-                  >
-                    <div className="text-2xl">{reaction.reactionType}</div>
-                    <p className="mt-2 text-sm font-semibold text-charcoal-900">
-                      {reaction.count}
-                    </p>
-                  </motion.button>
-                ))}
-              </div>
-            </Card>
-          </section>
-
-          <section className="grid gap-6 xl:grid-cols-[0.98fr_1.02fr]">
-            <Card
-              title="Have more to say?"
-              description="Longer stories belong in the Guestbook, where visitors can leave fuller memories."
-            >
-              <div className="space-y-4">
-                <div className="rounded-[24px] border border-plum-700/10 bg-cream-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-plum-700">
-                    Guestbook
-                  </p>
-                  <p className="mt-2 text-sm leading-7 text-charcoal-900/72">
-                    Have more to say? Leave a longer memory in the Guestbook.
-                  </p>
-                </div>
-                <Button variant="secondary" onClick={() => setIsGuestbookModalOpen(true)}>
-                  Open Guestbook
-                </Button>
-              </div>
-            </Card>
-
-            <Card
-              className="relative overflow-visible"
-              title="Leave a wish"
-              description="Guests do not need an account. Just add your name and heartfelt message."
-            >
-              <WishCelebrationBurst isVisible={Boolean(wishCelebrationTick)} />
               <form
                 id="leave-wish"
                 className="space-y-4"
@@ -880,21 +659,6 @@ export function PublicEventPage() {
                     {wishMessageLength}/{WISH_MESSAGE_LIMIT}
                   </p>
                 </div>
-                <AnimatePresence>
-                  {wishCelebrationTick ? (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      className="rounded-[20px] border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-charcoal-900/72"
-                    >
-                      Your wish has landed beautifully and the latest preview is updating.
-                    </motion.div>
-                    ) : null}
-                </AnimatePresence>
-                <Button disabled={!canSubmitWish} type="submit">
-                  {submitWishMutation.isPending ? "Sending your wish..." : "Send wish"}
-                </Button>
                 <div className="pt-1 text-sm text-charcoal-900/60">
                   <button
                     className="font-medium text-plum-800 underline underline-offset-4 transition hover:text-plum-700"
@@ -904,6 +668,9 @@ export function PublicEventPage() {
                     Have more to say? Leave a longer memory in the Guestbook.
                   </button>
                 </div>
+                <Button disabled={!canSubmitWish} type="submit">
+                  {submitWishMutation.isPending ? "Sending your wish..." : "Send wish"}
+                </Button>
               </form>
             </Card>
           </section>
@@ -1050,29 +817,26 @@ export function PublicEventPage() {
       >
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-              {canShowRecentWishes && hasVisibleRecentWishes ? (
-                <div className="rounded-[24px] border border-plum-700/10 bg-cream-50 p-5">
-                  <Button
-                    className="w-full"
-                    onClick={() => {
-                      setShowRecentWishesPreview(true);
-                      setIsWishSuccessModalOpen(false);
-                    }}
-                    variant="secondary"
-                  >
-                    View Recent Wishes
-                  </Button>
-                  <p className="mt-3 text-sm leading-6 text-charcoal-900/62">
-                    See some of the love and messages others have shared.
-                  </p>
-                </div>
-              ) : null}
+            {canShowRecentWishes && hasVisibleRecentWishes ? (
+              <div className="rounded-[24px] border border-plum-700/10 bg-cream-50 p-5">
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setShowRecentWishesPreview(true);
+                    setIsWishSuccessModalOpen(false);
+                  }}
+                  variant="secondary"
+                >
+                  View Recent Wishes
+                </Button>
+                <p className="mt-3 text-sm leading-6 text-charcoal-900/62">
+                  See some of the love and messages others have shared.
+                </p>
+              </div>
+            ) : null}
 
             <div className="rounded-[24px] border border-plum-700/10 bg-white/78 p-5">
-              <Button
-                className="w-full"
-                onClick={() => navigate("/")}
-              >
+              <Button className="w-full" onClick={() => navigate("/")}>
                 Create Your Own Celebration
               </Button>
               <p className="mt-3 text-sm leading-6 text-charcoal-900/62">
