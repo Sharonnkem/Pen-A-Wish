@@ -101,7 +101,6 @@ export function WallStudioPage() {
     message?: string;
     status: "idle" | "loading" | "success" | "failure";
   }>({ format: null, status: "idle" });
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [exportTarget, setExportTarget] = useState<"guestbook" | "wishes">("wishes");
   const [settings, setSettings] = useState<WishWallSettings>(cloneSettings(defaultSettings));
 
@@ -826,10 +825,8 @@ export function WallStudioPage() {
             {exportTarget === "guestbook" ? (
             <GuestbookWallPreview
                 celebrantName={eventDetails.celebrantName}
-                coverImageUrl={eventDetails.coverImageUrl}
                 eventDate={eventDetails.eventDate}
                 eventTitle={guestbookEvent.title}
-                profileImageUrl={eventDetails.profileImageUrl}
                 entries={guestbookQuery.data?.data.entries ?? []}
                 settings={settings}
                 onRemoveEntry={(entryId) => hideGuestbookMutation.mutate(entryId)}

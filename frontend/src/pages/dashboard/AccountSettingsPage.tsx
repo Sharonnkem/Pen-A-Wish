@@ -31,7 +31,7 @@ const defaultPreferences: LocalPreferences = {
 
 export function AccountSettingsPage() {
   const navigate = useNavigate();
-  const { deleteAccount, logout, refreshSession, updateProfile, user } = useAuth();
+  const { deleteAccount, logout, updateProfile, user } = useAuth();
   const { showToast } = useToast();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.avatarUrl ?? null);
   const [avatarCropSource, setAvatarCropSource] = useState<File | null>(null);

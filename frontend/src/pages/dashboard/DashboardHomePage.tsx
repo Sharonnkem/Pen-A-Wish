@@ -35,8 +35,6 @@ export function DashboardHomePage() {
     navigate("/login", { replace: true });
   }
 
-  const overview = overviewQuery.data?.data;
-
   return (
     <DashboardLayout
       title={`Welcome, ${user?.name ?? "there"}`}
