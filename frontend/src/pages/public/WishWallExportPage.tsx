@@ -21,6 +21,34 @@ type ExportPayload = {
   wishes?: PublicWishPreview[];
 };
 
+function getExportBackgroundStyle(settings?: WishWallSettings) {
+  if (!settings) {
+    return {
+      backgroundColor: "#140f12"
+    };
+  }
+
+  const hasBackgroundImage = settings.background.mode === "image" && settings.background.imageUrl;
+
+  if (settings.background.mode === "solid") {
+    return {
+      backgroundColor: settings.background.color
+    };
+  }
+
+  if (settings.background.mode === "image" && hasBackgroundImage) {
+    return {
+      backgroundImage: `linear-gradient(180deg, rgba(20, 15, 18, 0.24), rgba(20, 15, 18, 0.12)), url(${settings.background.imageUrl})`,
+      backgroundPosition: "center",
+      backgroundSize: "cover"
+    };
+  }
+
+  return {
+    backgroundImage: `linear-gradient(180deg, ${settings.background.gradientStart} 0%, ${settings.background.gradientEnd} 100%)`
+  };
+}
+
 function decodeBase64Url(value: string) {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
@@ -48,7 +76,7 @@ export function WishWallExportPage() {
 
   if (!payload) {
     return (
-      <main className="min-h-screen bg-paper p-8 text-charcoal-900">
+      <main className="min-h-screen p-0 text-charcoal-900" style={getExportBackgroundStyle()}>
         <div className="mx-auto max-w-3xl rounded-[28px] border border-white/70 bg-white/86 p-6 shadow-card">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-plum-700">
             Wish Wall export
@@ -60,9 +88,9 @@ export function WishWallExportPage() {
   }
 
   return (
-    <main className="min-h-screen bg-paper p-8 text-charcoal-900">
+    <main className="min-h-screen p-0 text-charcoal-900" style={getExportBackgroundStyle(payload.settings)}>
       <div
-        className="mx-auto w-[1800px] max-w-none"
+        className="mx-auto w-[1800px] min-w-[1800px] max-w-none"
         data-export-ready="true"
         data-export-wall="true"
       >

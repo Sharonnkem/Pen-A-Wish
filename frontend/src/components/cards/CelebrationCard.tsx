@@ -7,8 +7,10 @@ import { useToast } from "../common/Toast";
 import type { CelebrationEvent } from "../../types/event";
 import {
   buildCelebrationShareMessage,
-  getDefaultSharePreviewImageUrl,
-  getCelebrationShareUrl
+  getCelebrationPreviewImageUrl,
+  getCelebrationShareUrl,
+  getCelebrationSharePreviewImageUrl,
+  shareCelebrationInvite
 } from "../../utils/share";
 
 type CelebrationCardProps = {
@@ -54,12 +56,15 @@ export function CelebrationCard({
   }
 
   async function handleNativeShare() {
-    if (navigator.share) {
-      await navigator.share({
-        text: shareMessage,
-        title: event.title,
-        url: publicShareUrl
-      });
+    const shared = await shareCelebrationInvite({
+      celebrantName: event.celebrantName,
+      eventType: event.eventType,
+      publicUrl: publicShareUrl,
+      sharePreviewImageUrl: getCelebrationSharePreviewImageUrl(event.slug),
+      title: event.title
+    });
+
+    if (shared) {
       return;
     }
 
@@ -128,7 +133,7 @@ export function CelebrationCard({
           <img
             alt={`${event.celebrantName} profile`}
             className="h-24 w-24 rounded-[24px] object-cover shadow-[0_12px_30px_rgba(67,34,53,0.12)]"
-            src={event.profileImageUrl ?? event.coverImageUrl ?? getDefaultSharePreviewImageUrl()}
+            src={getCelebrationPreviewImageUrl(event.profileImageUrl, event.coverImageUrl)}
           />
           <p className="text-sm font-medium text-charcoal-900">{event.celebrantName}</p>
         </div>

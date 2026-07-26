@@ -10,9 +10,10 @@ import { LoadingState } from "../../components/common/LoadingState";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { eventService } from "../../services/event.service";
 import {
-  buildCelebrationShareMessage,
   getCelebrationShareUrl,
-  openShareUrl
+  getCelebrationSharePreviewImageUrl,
+  openShareUrl,
+  shareCelebrationInvite
 } from "../../utils/share";
 
 export function MyCelebrationsPage() {
@@ -110,12 +111,6 @@ export function MyCelebrationsPage() {
             <div className="grid gap-4 p-4 lg:hidden">
               {visibleEvents.map((event) => {
                 const shareUrl = getCelebrationShareUrl(event.slug);
-                const shareMessage = buildCelebrationShareMessage({
-                  celebrantName: event.celebrantName,
-                  eventType: event.eventType,
-                  publicUrl: shareUrl,
-                  title: event.title
-                });
                 const eventDate = new Date(event.eventDate).toLocaleDateString();
 
                 return (
@@ -169,12 +164,15 @@ export function MyCelebrationsPage() {
                         size="sm"
                         fullWidth
                         onClick={async () => {
-                          if (navigator.share) {
-                            await navigator.share({
-                              text: shareMessage,
-                              title: event.title,
-                              url: shareUrl
-                            });
+                          const shared = await shareCelebrationInvite({
+                            celebrantName: event.celebrantName,
+                            eventType: event.eventType,
+                            publicUrl: shareUrl,
+                            sharePreviewImageUrl: getCelebrationSharePreviewImageUrl(event.slug),
+                            title: event.title
+                          });
+
+                          if (shared) {
                             return;
                           }
 
@@ -208,12 +206,6 @@ export function MyCelebrationsPage() {
                 <tbody className="divide-y divide-plum-700/10">
                   {visibleEvents.map((event) => {
                     const shareUrl = getCelebrationShareUrl(event.slug);
-                    const shareMessage = buildCelebrationShareMessage({
-                      celebrantName: event.celebrantName,
-                      eventType: event.eventType,
-                      publicUrl: shareUrl,
-                      title: event.title
-                    });
                     const eventDate = new Date(event.eventDate).toLocaleDateString();
 
                     return (
@@ -278,13 +270,16 @@ export function MyCelebrationsPage() {
                               variant="ghost"
                               size="sm"
                               fullWidth
-                              onClick={async () => {
-                                if (navigator.share) {
-                                  await navigator.share({
-                                    text: shareMessage,
-                                    title: event.title,
-                                    url: shareUrl
-                                  });
+                            onClick={async () => {
+                                const shared = await shareCelebrationInvite({
+                                  celebrantName: event.celebrantName,
+                                  eventType: event.eventType,
+                                  publicUrl: shareUrl,
+                                  sharePreviewImageUrl: getCelebrationSharePreviewImageUrl(event.slug),
+                                  title: event.title
+                                });
+
+                                if (shared) {
                                   return;
                                 }
 

@@ -127,6 +127,7 @@ export const wishWallExportService = {
     });
 
     try {
+      const exportTimeoutMs = 45000;
       const page = await browser.newPage({
         deviceScaleFactor: 1,
         viewport: {
@@ -134,23 +135,26 @@ export const wishWallExportService = {
           width: 1920
         }
       });
-      page.setDefaultTimeout(120000);
-      page.setDefaultNavigationTimeout(120000);
+      page.setDefaultTimeout(exportTimeoutMs);
+      page.setDefaultNavigationTimeout(exportTimeoutMs);
 
       const exportUrl = new URL("/exports/wish-wall", frontendUrl ?? env.frontendUrl);
       exportUrl.searchParams.set("payload", encodePayload(payload));
 
-      await page.goto(exportUrl.toString(), { waitUntil: "networkidle" });
-      await page.evaluate(async () => {
-        if (document.fonts?.ready) {
-          await document.fonts.ready;
-        }
-      });
+      await page.goto(exportUrl.toString(), { waitUntil: "commit" });
 
       const wall = page.locator("[data-export-wall]");
       await wall.waitFor({ state: "visible" });
+      await Promise.race([
+        page.evaluate(async () => {
+          if (document.fonts?.ready) {
+            await document.fonts.ready;
+          }
+        }),
+        page.waitForTimeout(1500)
+      ]);
 
-      const box = await wall.boundingBox();
+      let box = await wall.boundingBox();
 
       if (!box) {
         throw new AppError("Unable to render the Wish Wall export", 500);
@@ -158,12 +162,31 @@ export const wishWallExportService = {
 
       const width = Math.ceil(box.width);
       const height = Math.ceil(box.height);
+      const exportPadding = 6;
 
       await page.setViewportSize({
-        height: Math.max(900, height + 120),
-        width: Math.max(1200, width + 80)
+        height: Math.max(900, height + exportPadding * 2 + 24),
+        width: Math.max(1200, width + exportPadding * 2 + 24)
       });
       await page.emulateMedia({ media: "screen" });
+      await page.addStyleTag({
+        content: `
+          *, *::before, *::after {
+            animation-duration: 0s !important;
+            animation-delay: 0s !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0s !important;
+            transition-delay: 0s !important;
+            scroll-behavior: auto !important;
+          }
+        `
+      });
+
+      box = await wall.boundingBox();
+
+      if (!box) {
+        throw new AppError("Unable to render the Wish Wall export", 500);
+      }
 
       if (format === "PDF") {
         return {
@@ -185,18 +208,12 @@ export const wishWallExportService = {
         };
       }
 
-      const screenshotBuffer = await page.screenshot({
-        clip: {
-          height,
-          width,
-          x: box.x,
-          y: box.y
-        },
+      const screenshotBuffer = await wall.screenshot({
         animations: "disabled",
         caret: "hide",
         quality: format === "JPG" ? 94 : undefined,
         scale: "css",
-        timeout: 120000,
+        timeout: exportTimeoutMs,
         type: format === "JPG" ? "jpeg" : "png"
       });
 

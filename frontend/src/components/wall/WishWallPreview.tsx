@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 
 import type { PublicWishPreview } from "../../types/event";
 import type { WishWallSettings } from "../../types/wish-wall";
@@ -222,6 +222,20 @@ function computeCollageCanvasHeightPx(
   return baseHeightPx + extraStandard + extraMini + extraMicro;
 }
 
+const LAYER_TEXT_LIMITS: Record<CollageLayer, { message: number; sender: number }> = {
+  featured: { message: 220, sender: 30 },
+  standard: { message: 140, sender: 26 },
+  mini: { message: 90, sender: 22 },
+  micro: { message: 60, sender: 18 }
+};
+
+function truncateText(text: string, maxChars: number) {
+  if (text.length <= maxChars) {
+    return text;
+  }
+
+  return `${text.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
+}
 function getCollagePositions(layer: CollageLayer): CollageSlotPoint[] {
   const featuredPositions: CollageSlotPoint[] = [
     { left: 3, top: 4, width: 11 },
@@ -619,8 +633,8 @@ function PosterScrapNote({
 
   const senderColor = hexToRgba(styleVariant.accent, featured ? 0.94 : standard ? 0.88 : 0.78);
   const messageColor = hexToRgba(styleVariant.accent, featured ? 0.96 : standard ? 0.9 : 0.82);
-  const displaySender = wish.senderName;
-  const displayMessage = wish.message;
+  const displaySender = truncateText(wish.senderName, LAYER_TEXT_LIMITS[prominence].sender);
+  const displayMessage = truncateText(wish.message, LAYER_TEXT_LIMITS[prominence].message);
 
   return (
     <article
@@ -665,7 +679,7 @@ function PosterScrapNote({
           type="button"
           onClick={() => onRemoveWish(wish.id)}
         >
-          �
+          ×
         </button>
       ) : null}
 
@@ -762,6 +776,7 @@ function WishCard({
         style={{
           border: `2px solid ${accentColor}`,
           boxShadow: "0 16px 34px rgba(67,34,53,0.08), 0 0 0 1px rgba(255,255,255,0.8) inset",
+          clipPath: "polygon(2% 1%, 96% 0%, 100% 9%, 98% 92%, 94% 100%, 6% 98%, 0 90%, 1% 9%)",
           transform: `rotate(${rotation}deg)`
         }}
       >
@@ -774,7 +789,7 @@ function WishCard({
         ) : null}
         <div className="relative px-2 pt-2.5 pb-2">
           <p className={`font-semibold uppercase ${compactNameClass}`} style={{ color: accentColor }}>
-            {wish.senderName}
+            {truncateText(wish.senderName, 24)}
           </p>
           <p
             className={cn(
@@ -783,7 +798,7 @@ function WishCard({
             )}
             style={{ fontFamily: getTypographyFont(settings.typography.bodyFont) }}
           >
-            {wish.message}
+            {truncateText(wish.message, isCompact ? 140 : 220)}
           </p>
           <div className={`${compactLineClass} h-px rounded-full`} style={{ backgroundColor: `${accentColor}66` }} />
         </div>
@@ -803,7 +818,7 @@ function WishCard({
         <div className="pointer-events-none absolute inset-0 rounded-[18px]" style={{ backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,250,244,0.38) 100%)" }} />
         <div className="relative">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-[#a88a6b]">
-            {wish.senderName}
+            {truncateText(wish.senderName, 24)}
           </p>
           <p
             className={cn(
@@ -812,7 +827,7 @@ function WishCard({
             )}
             style={{ fontFamily: getTypographyFont(settings.typography.bodyFont) }}
           >
-            {wish.message}
+            {truncateText(wish.message, isCompact ? 140 : 220)}
           </p>
         </div>
       </article>
@@ -848,7 +863,7 @@ function WishCard({
             )}
             style={{ fontFamily: getTypographyFont(settings.typography.bodyFont) }}
           >
-            {wish.message}
+            {truncateText(wish.message, isCompact ? 140 : 220)}
           </p>
         </div>
       </article>
@@ -886,7 +901,7 @@ function WishCard({
           type="button"
           onClick={() => onRemoveWish(wish.id)}
         >
-          <span className="text-lg leading-none">�</span>
+          <span className="text-lg leading-none">×</span>
         </button>
       ) : null}
 
@@ -895,7 +910,7 @@ function WishCard({
         <div className={cn("mt-4 flex items-start justify-between gap-4", isCompact && "gap-2")}>
           <div>
             <p className="text-xl text-plum-800" style={{ fontFamily: getTypographyFont(settings.typography.headingFont) }}>
-              {wish.senderName}
+              {truncateText(wish.senderName, 24)}
             </p>
             {settings.export.showMetadata ? (
               <p className="mt-1 text-xs font-semibold uppercase tracking-[0.22em] text-charcoal-900/44">
@@ -917,7 +932,7 @@ function WishCard({
           )}
           style={{ fontFamily: getTypographyFont(settings.typography.bodyFont) }}
         >
-          {wish.message}
+          {truncateText(wish.message, isCompact ? 100 : 140)}
         </p>
 
         {settings.export.showReactions && (wish.reactionCounts?.length ?? 0) ? (
@@ -1248,13 +1263,13 @@ export function WishWallPreview({
                     page.items.map((wish, index) => (
                       <div key={wish.id} className="pb-4">
                         <p className="text-xs uppercase tracking-[0.24em] text-charcoal-900/42">
-                          {wish.senderName}
+                          {truncateText(wish.senderName, 24)}
                         </p>
                         <p
                           className="mt-2 font-normal italic text-[1rem] leading-7 text-plum-800"
                           style={{ fontFamily: getTypographyFont(settings.typography.bodyFont) }}
                         >
-                          {wish.message}
+                          {truncateText(wish.message, isCompact ? 140 : 220)}
                         </p>
                         {index < page.items.length - 1 ? (
                           <div className="mt-4 border-b border-dashed border-[#e7cfa8]" />
@@ -1471,23 +1486,23 @@ export function WishWallPreview({
                   </div>
                 )}
 
-                <div className="pointer-events-none absolute left-[3%] top-[10%] text-2xl text-[#f2c66a]">?</div>
-                <div className="pointer-events-none absolute right-[4%] top-[14%] text-3xl text-[#c58de6]">?</div>
-                <div className="pointer-events-none absolute left-[10%] bottom-[18%] text-3xl text-[#ef8ab0]">?</div>
-                <div className="pointer-events-none absolute right-[14%] bottom-[8%] text-3xl text-[#75b6f5]">?</div>
-                <div className="pointer-events-none absolute left-[78%] top-[50%] text-4xl text-[#f39ac1]">?</div>
+                <div className="pointer-events-none absolute left-[3%] top-[10%] text-2xl text-[#f2c66a]">✦</div>
+                <div className="pointer-events-none absolute right-[4%] top-[14%] text-3xl text-[#c58de6]">♡</div>
+                <div className="pointer-events-none absolute left-[10%] bottom-[18%] text-3xl text-[#ef8ab0]">☆</div>
+                <div className="pointer-events-none absolute right-[14%] bottom-[8%] text-3xl text-[#75b6f5]">✧</div>
+                <div className="pointer-events-none absolute left-[78%] top-[50%] text-4xl text-[#f39ac1]">◯</div>
 
-                <div className="pointer-events-none absolute left-[22%] top-[22%] text-3xl text-[#f2c66a]">?</div>
-                <div className="pointer-events-none absolute right-[18%] top-[20%] text-4xl text-[#c58de6]">?</div>
-                <div className="pointer-events-none absolute left-[8%] bottom-[24%] text-4xl text-[#ef8ab0]">?</div>
-                <div className="pointer-events-none absolute right-[10%] bottom-[10%] text-4xl text-[#75b6f5]">?</div>
-                <div className="pointer-events-none absolute left-[64%] top-[58%] text-5xl text-[#f39ac1]">?</div>
-                <div className="pointer-events-none absolute left-[31%] top-[14%] text-2xl text-[#f39ac1]">?</div>
-                <div className="pointer-events-none absolute right-[31%] top-[15%] text-2xl text-[#f2c66a]">?</div>
-                <div className="pointer-events-none absolute left-[17%] bottom-[14%] text-3xl text-[#c58de6]">?</div>
-                <div className="pointer-events-none absolute right-[24%] bottom-[15%] text-3xl text-[#ef8ab0]">?</div>
-                <div className="pointer-events-none absolute left-[50%] top-[81%] text-2xl text-[#75b6f5]">?</div>
-                <div className="pointer-events-none absolute right-[8%] top-[38%] text-2xl text-[#f2c66a]">?</div>
+                <div className="pointer-events-none absolute left-[22%] top-[22%] text-3xl text-[#f2c66a]">✦</div>
+                <div className="pointer-events-none absolute right-[18%] top-[20%] text-4xl text-[#c58de6]">♡</div>
+                <div className="pointer-events-none absolute left-[8%] bottom-[24%] text-4xl text-[#ef8ab0]">☆</div>
+                <div className="pointer-events-none absolute right-[10%] bottom-[10%] text-4xl text-[#75b6f5]">✧</div>
+                <div className="pointer-events-none absolute left-[64%] top-[58%] text-5xl text-[#f39ac1]">◯</div>
+                <div className="pointer-events-none absolute left-[31%] top-[14%] text-2xl text-[#f39ac1]">❋</div>
+                <div className="pointer-events-none absolute right-[31%] top-[15%] text-2xl text-[#f2c66a]">✿</div>
+                <div className="pointer-events-none absolute left-[17%] bottom-[14%] text-3xl text-[#c58de6]">✦</div>
+                <div className="pointer-events-none absolute right-[24%] bottom-[15%] text-3xl text-[#ef8ab0]">♡</div>
+                <div className="pointer-events-none absolute left-[50%] top-[81%] text-2xl text-[#75b6f5]">✧</div>
+                <div className="pointer-events-none absolute right-[8%] top-[38%] text-2xl text-[#f2c66a]">★</div>
 
                 {!exportMode && totalCollagePages > 1 ? (
                   <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center justify-center gap-3 rounded-full border border-[#ead9c2] bg-white/86 px-4 py-2 shadow-[0_8px_18px_rgba(67,34,53,0.06)] backdrop-blur-sm">
@@ -1677,4 +1692,7 @@ export function WishWallPreview({
     </section>
   );
 } 
+
+
+
 

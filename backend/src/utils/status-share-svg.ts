@@ -65,7 +65,7 @@ export function buildStatusShareSvg(input: StatusShareSvgInput) {
     )
     .join("");
   const backgroundPhotoSvg = photoUrl
-    ? `<image href="${photoUrl}" x="0" y="0" width="1132" height="1600" preserveAspectRatio="xMidYMid slice" opacity="0.96" clip-path="url(#bgClip)" />`
+    ? `<image href="${photoUrl}" x="0" y="0" width="1132" height="1600" preserveAspectRatio="xMidYMid slice" opacity="1" clip-path="url(#bgClip)" />`
     : "";
   const portraitPhotoSvg = photoUrl
     ? `<image href="${photoUrl}" x="326" y="170" width="480" height="480" preserveAspectRatio="xMidYMid slice" clip-path="url(#portraitClip)" />`
@@ -75,13 +75,13 @@ export function buildStatusShareSvg(input: StatusShareSvgInput) {
 <svg xmlns="http://www.w3.org/2000/svg" width="1132" height="1600" viewBox="0 0 1132 1600" role="img" aria-label="${celebrantName} celebration share card">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#120d12"/>
-      <stop offset="100%" stop-color="#2a1e28"/>
+      <stop offset="0%" stop-color="#f5ede5"/>
+      <stop offset="100%" stop-color="#e9d9c8"/>
     </linearGradient>
     <linearGradient id="overlay" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="rgba(0,0,0,0.12)"/>
-      <stop offset="50%" stop-color="rgba(0,0,0,0.34)"/>
-      <stop offset="100%" stop-color="rgba(0,0,0,0.68)"/>
+      <stop offset="0%" stop-color="rgba(20,15,18,0.08)"/>
+      <stop offset="50%" stop-color="rgba(20,15,18,0.22)"/>
+      <stop offset="100%" stop-color="rgba(20,15,18,0.42)"/>
     </linearGradient>
     <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
