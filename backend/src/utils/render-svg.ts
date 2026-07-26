@@ -1,6 +1,10 @@
 import { chromium } from "playwright";
 
+import { ensurePlaywrightChromium } from "./ensure-playwright-chromium.js";
+
 export async function renderSvgToPngBuffer(svg: string) {
+  ensurePlaywrightChromium();
+
   const browser = await chromium.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
     headless: true

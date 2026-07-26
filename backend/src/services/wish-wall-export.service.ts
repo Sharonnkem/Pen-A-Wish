@@ -7,6 +7,7 @@ import { eventService } from "./event.service.js";
 import { wishWallService } from "./wish-wall.service.js";
 import type { AuthUser } from "../types/auth.js";
 import { AppError } from "../utils/app-error.js";
+import { ensurePlaywrightChromium } from "../utils/ensure-playwright-chromium.js";
 
 export type WishWallExportFormat = "JPG" | "PDF" | "PNG";
 export type WishWallExportSource = "guestbook" | "wishes";
@@ -117,6 +118,8 @@ export const wishWallExportService = {
         }))
       };
     }
+
+    ensurePlaywrightChromium();
 
     const browser = await chromium.launch({
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
