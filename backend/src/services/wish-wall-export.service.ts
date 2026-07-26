@@ -139,6 +139,11 @@ export const wishWallExportService = {
       exportUrl.searchParams.set("payload", encodePayload(payload));
 
       await page.goto(exportUrl.toString(), { waitUntil: "networkidle" });
+      await page.evaluate(async () => {
+        if (document.fonts?.ready) {
+          await document.fonts.ready;
+        }
+      });
 
       const wall = page.locator("[data-export-wall]");
       await wall.waitFor({ state: "visible" });
@@ -178,7 +183,13 @@ export const wishWallExportService = {
         };
       }
 
-      const screenshotBuffer = await wall.screenshot({
+      const screenshotBuffer = await page.screenshot({
+        clip: {
+          height,
+          width,
+          x: box.x,
+          y: box.y
+        },
         quality: format === "JPG" ? 94 : undefined,
         type: format === "JPG" ? "jpeg" : "png"
       });
