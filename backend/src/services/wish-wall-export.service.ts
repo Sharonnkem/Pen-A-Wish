@@ -128,12 +128,14 @@ export const wishWallExportService = {
 
     try {
       const page = await browser.newPage({
-        deviceScaleFactor: 2,
+        deviceScaleFactor: 1,
         viewport: {
           height: 2200,
           width: 1920
         }
       });
+      page.setDefaultTimeout(120000);
+      page.setDefaultNavigationTimeout(120000);
 
       const exportUrl = new URL("/exports/wish-wall", frontendUrl ?? env.frontendUrl);
       exportUrl.searchParams.set("payload", encodePayload(payload));
@@ -158,8 +160,8 @@ export const wishWallExportService = {
       const height = Math.ceil(box.height);
 
       await page.setViewportSize({
-        height: Math.max(900, height),
-        width: Math.max(1200, width)
+        height: Math.max(900, height + 120),
+        width: Math.max(1200, width + 80)
       });
       await page.emulateMedia({ media: "screen" });
 
@@ -190,7 +192,11 @@ export const wishWallExportService = {
           x: box.x,
           y: box.y
         },
+        animations: "disabled",
+        caret: "hide",
         quality: format === "JPG" ? 94 : undefined,
+        scale: "css",
+        timeout: 120000,
         type: format === "JPG" ? "jpeg" : "png"
       });
 
