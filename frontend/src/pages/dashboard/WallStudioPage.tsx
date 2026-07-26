@@ -101,6 +101,7 @@ export function WallStudioPage() {
     message?: string;
     status: "idle" | "loading" | "success" | "failure";
   }>({ format: null, status: "idle" });
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [exportTarget, setExportTarget] = useState<"guestbook" | "wishes">("wishes");
   const [settings, setSettings] = useState<WishWallSettings>(cloneSettings(defaultSettings));
 

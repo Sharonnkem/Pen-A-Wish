@@ -198,19 +198,9 @@ type CollagePlacement = {
   minWidth: string;
 };
 
-// The poster's inner canvas is `max-w-[78rem]` wide by default; height is
-// computed dynamically (see computeCollageCanvasHeightPx) so it always has
-// room for every card. Both card position (left/top, given as percentages)
-// and card size (width/height, given in rem/px) are converted through this
-// single width/height pair everywhere, so the collision math and the actual
-// rendered layout can never disagree about where a card's edges are.
-const COLLAGE_CANVAS_WIDTH_PX = 1248; // 78rem
-const COLLAGE_BASE_HEIGHT_PX = 720; // 45rem — live-preview canvas height
+const COLLAGE_CANVAS_WIDTH_PX = 1248;
+const COLLAGE_BASE_HEIGHT_PX = 720;
 
-// The celebrant portrait/name/wish-count block is centered around
-// (50%, 47%) of the canvas. This safe zone (with a little margin) is always
-// treated as pre-occupied space so no card of any layer can be placed on
-// top of it.
 const HERO_SAFE_ZONE_PCT = {
   left: 42,
   top: 25,
@@ -218,17 +208,12 @@ const HERO_SAFE_ZONE_PCT = {
   bottom: 70
 } as const;
 
-// The "designed" slot counts each layer's static position table comfortably
-// supports before the canvas needs to grow.
 const LAYER_DESIGN_CAPACITY = {
   standard: 6,
   mini: 20,
   micro: 20
 } as const;
 
-// Generous per-card height budget (px) used only to grow the canvas when a
-// layer exceeds its designed capacity — deliberately larger than a typical
-// card so there's always slack for the collision search to succeed.
 const LAYER_GROWTH_BUDGET_PX = {
   standard: 190,
   mini: 90,
@@ -248,9 +233,6 @@ function computeCollageCanvasHeightPx(
   return baseHeightPx + extraStandard + extraMini + extraMicro;
 }
 
-// Maximum characters shown per layer. Capping the text means the estimated
-// height (computed from these same capped strings) can never be exceeded by
-// what's actually rendered — the estimate and the render always agree.
 const LAYER_TEXT_LIMITS: Record<CollageLayer, { message: number; sender: number }> = {
   featured: { message: 220, sender: 30 },
   standard: { message: 140, sender: 26 },
@@ -267,59 +249,45 @@ function truncateText(text: string, maxChars: number) {
 }
 
 function getCollagePositions(layer: CollageLayer): CollageSlotPoint[] {
-  /*
-   * Layout bands (mirrors the reference poster):
-   *   - upper ring:   cards orbit the hero block from above
-   *   - side ring:    cards fill the left/right gaps around the center
-   *   - lower ring:   cards sit low without touching the bottom edge
-   *
-   * The hero safe zone (x ~32–68%, y ~18–82%) is never touched, so
-   * cards form a clean ring around the celebrant portrait/name block
-   * instead of overlapping it. The order of these points matters: the
-   * most central open spaces are listed first so the layout fills in
-   * toward the middle before it starts using the outer edges.
-   */
   const featuredPositions: CollageSlotPoint[] = [
-    { left: 3, top: 4, width: 11 }, // top-left corner
-    { left: 22, top: 5, width: 10.5 }, // upper-left center
-    { left: 58, top: 5, width: 10.5 }, // upper-right center
-    { left: 74, top: 4, width: 10.5 }, // top-right corner
-    { left: 5, top: 22, width: 10.5 }, // left column, upper
-    { left: 63, top: 22, width: 10.5 }, // right column, upper
-    { left: 16, top: 38, width: 10.5 }, // inner-left mid
-    { left: 64, top: 39, width: 10.5 }, // inner-right mid
-    { left: 5, top: 72, width: 10.5 }, // bottom-left corner
-    { left: 60, top: 72, width: 10.5 } // bottom-right corner
+    { left: 3, top: 4, width: 11 },
+    { left: 22, top: 5, width: 10.5 },
+    { left: 58, top: 5, width: 10.5 },
+    { left: 74, top: 4, width: 10.5 },
+    { left: 5, top: 22, width: 10.5 },
+    { left: 63, top: 22, width: 10.5 },
+    { left: 16, top: 38, width: 10.5 },
+    { left: 64, top: 39, width: 10.5 },
+    { left: 5, top: 72, width: 10.5 },
+    { left: 60, top: 72, width: 10.5 }
   ];
 
   const standardPositions: CollageSlotPoint[] = [
-    { left: 28, top: 3, width: 10 }, // top strip, center-left
-    { left: 46, top: 3, width: 9.5 }, // top strip, center-right
-    { left: 4, top: 18, width: 9.2 }, // left column, upper
-    { left: 20, top: 19, width: 9.2 }, // left column, inner
-    { left: 52, top: 18, width: 9.2 }, // right column, inner
-    { left: 70, top: 19, width: 9 }, // right column, upper
-    { left: 10, top: 42, width: 9.4 }, // left column, mid
-    { left: 60, top: 41, width: 9.4 }, // right column, mid
-    { left: 24, top: 44, width: 9.2 }, // inner-left mid
-    { left: 46, top: 44, width: 9.2 }, // inner-right mid
-    { left: 22, top: 58, width: 9.4 }, // lower-left inner
-    { left: 48, top: 58, width: 9.4 }, // lower-right inner
-    { left: 18, top: 74, width: 10 }, // bottom strip, left
-    { left: 40, top: 76, width: 9.6 }, // bottom strip, center-left
-    { left: 60, top: 75, width: 9.6 }, // bottom strip, center-right
-    { left: 76, top: 58, width: 9.2 } // right lower column
+    { left: 28, top: 3, width: 10 },
+    { left: 46, top: 3, width: 9.5 },
+    { left: 4, top: 18, width: 9.2 },
+    { left: 20, top: 19, width: 9.2 },
+    { left: 52, top: 18, width: 9.2 },
+    { left: 70, top: 19, width: 9 },
+    { left: 10, top: 42, width: 9.4 },
+    { left: 60, top: 41, width: 9.4 },
+    { left: 24, top: 44, width: 9.2 },
+    { left: 46, top: 44, width: 9.2 },
+    { left: 22, top: 58, width: 9.4 },
+    { left: 48, top: 58, width: 9.4 },
+    { left: 18, top: 74, width: 10 },
+    { left: 40, top: 76, width: 9.6 },
+    { left: 60, top: 75, width: 9.6 },
+    { left: 76, top: 58, width: 9.2 }
   ];
 
   const miniPositions: CollageSlotPoint[] = [
-    // upper ring fill
     { left: 8, top: 8, width: 4.4 },
     { left: 18, top: 10, width: 4.4 },
     { left: 60, top: 9, width: 4.4 },
     { left: 70, top: 10, width: 4.4 },
     { left: 18, top: 24, width: 4.4 },
     { left: 60, top: 24, width: 4.4 },
-    // side ring fill
     { left: 4, top: 32, width: 4.4 },
     { left: 14, top: 32, width: 4.4 },
     { left: 66, top: 32, width: 4.4 },
@@ -328,7 +296,6 @@ function getCollagePositions(layer: CollageLayer): CollageSlotPoint[] {
     { left: 16, top: 46, width: 4.4 },
     { left: 64, top: 46, width: 4.4 },
     { left: 76, top: 46, width: 4.4 },
-    // lower ring fill
     { left: 6, top: 60, width: 4.4 },
     { left: 18, top: 62, width: 4.4 },
     { left: 60, top: 62, width: 4.4 },
@@ -340,7 +307,6 @@ function getCollagePositions(layer: CollageLayer): CollageSlotPoint[] {
   ];
 
   const microPositions: CollageSlotPoint[] = [
-    // tiny texture near the center gaps first, then toward the edges.
     { left: 24, top: 10, width: 3.2 },
     { left: 50, top: 10, width: 3.2 },
     { left: 24, top: 22, width: 3.2 },
@@ -407,9 +373,6 @@ function estimateCollageHeight(wish: PublicWishPreview, layer: CollageLayer, wid
   const widthPx = widthRem * 16;
   const fontSize =
     layer === "standard" ? 10.5 : layer === "mini" ? 9.6 : 8.8;
-  // A larger per-character width estimate (0.62 vs. the tighter 0.56) means
-  // fewer characters fit per line in our math than in reality, so the line
-  // count — and therefore the height — is never underestimated.
   const charsPerLine = clampNumber(Math.floor(widthPx / (fontSize * 0.62)), 6, 44);
   const messageLines = Math.max(1, Math.ceil(message.length / charsPerLine));
   const senderLines = Math.max(1, Math.ceil(senderName.length / Math.max(charsPerLine, 10)));
@@ -417,9 +380,6 @@ function estimateCollageHeight(wish: PublicWishPreview, layer: CollageLayer, wid
   const messageLineHeight = layer === "standard" ? 1.42 : layer === "mini" ? 1.34 : 1.28;
   const senderHeight = senderLines * fontSize * 1.28;
   const messageHeight = messageLines * fontSize * messageLineHeight;
-  // Extra fixed cushion on top of the line-based estimate to absorb font
-  // metric variance (the handwritten/cursive font isn't perfectly uniform
-  // width) so the box is always at least as tall as what's rendered.
   const safetyBuffer = layer === "standard" ? 22 : layer === "mini" ? 18 : 16;
 
   return Math.ceil(basePadding + senderHeight + messageHeight + safetyBuffer);
@@ -465,10 +425,6 @@ function getCollageHeroRect(canvasWidthPx: number, canvasHeightPx: number) {
   };
 }
 
-// Exhaustively scans the canvas for any free rect of the required size.
-// Used only when a layer's own designed slots (plus their nearby variants)
-// are all taken, so cards can keep filling the wall without ever
-// overlapping anything already placed.
 function findFreeGridSlot(
   widthRem: number,
   heightPx: number,
@@ -573,8 +529,6 @@ function buildCollisionSafeCollagePlacements(
     const widthRem = contentWidthRem;
     const heightPx = baseHeightPx;
 
-    // The layer's own designed slots (and their nearby variants) are all
-    // taken — exhaustively search the rest of the canvas for free space.
     const gridSlot = findFreeGridSlot(widthRem, heightPx, occupied, canvasWidthPx, canvasHeightPx, collisionPadding);
 
     if (gridSlot) {
@@ -589,10 +543,6 @@ function buildCollisionSafeCollagePlacements(
       } satisfies CollagePlacement;
     }
 
-    // Absolute last resort — the canvas is genuinely full. Append strictly
-    // below every rect placed so far. This can never overlap anything,
-    // because it starts below the bottom edge of everything already on the
-    // wall, by construction.
     const widthPx = widthRem * 16;
     const bottomMostPx = occupied.reduce((max, rect) => Math.max(max, rect.bottom), 0);
     const stackTopPx = bottomMostPx + 24;
@@ -1164,15 +1114,6 @@ export function WishWallPreview({
     const canvasWidthPx = collageCanvasWidthPx;
     const canvasHeightPx = collageCanvasHeightPx;
 
-    // Seed the occupied-rect list with the hero exclusion zone so no
-    // card (of any layer) can ever be placed under the celebrant
-    // portrait/name/wish-count block. Standard (largest, most
-    // important) cards are placed first, then mini, then micro, so
-    // smaller background texture yields space to the bigger cards —
-    // matching the visual priority of the reference poster. Every
-    // candidate is checked for pixel-accurate overlap before it's
-    // accepted, with grid-scan and guaranteed-safe stacking fallbacks,
-    // so cards never overlap no matter how many wishes are on the wall.
     const occupied: CollageRect[] = [getCollageHeroRect(canvasWidthPx, canvasHeightPx)];
 
     const standard = buildCollisionSafeCollagePlacements(
@@ -1813,4 +1754,4 @@ export function WishWallPreview({
       )}
     </section>
   );
-}
+} 
