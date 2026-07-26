@@ -8,7 +8,7 @@ import type { CelebrationEvent } from "../../types/event";
 import {
   buildCelebrationShareMessage,
   getDefaultSharePreviewImageUrl,
-  getPublicEventUrl
+  getCelebrationShareUrl
 } from "../../utils/share";
 
 type CelebrationCardProps = {
@@ -23,7 +23,7 @@ export function CelebrationCard({
   onGenerateWall
 }: CelebrationCardProps) {
   const { showToast } = useToast();
-  const publicShareUrl = useMemo(() => getPublicEventUrl(event.slug), [event.slug]);
+  const publicShareUrl = useMemo(() => getCelebrationShareUrl(event.slug), [event.slug]);
   const shareMessage = useMemo(
     () =>
       buildCelebrationShareMessage({

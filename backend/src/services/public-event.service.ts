@@ -16,6 +16,23 @@ import { sanitizePlainText } from "../utils/sanitize.js";
 import { emailService } from "./email.service.js";
 
 export const publicEventService = {
+  async getShareImageData(slug: string) {
+    const event = await findEventBySlug(slug);
+
+    if (!event || !event.is_public) {
+      throw new AppError("Celebration not found", 404);
+    }
+
+    return {
+      celebrantName: event.celebrant_name,
+      coverImageUrl: event.cover_image_url,
+      eventType: event.event_type,
+      profileImageUrl: event.profile_image_url,
+      slug: event.slug,
+      title: event.title
+    };
+  },
+
   async submitWish(
     slug: string,
     input: {

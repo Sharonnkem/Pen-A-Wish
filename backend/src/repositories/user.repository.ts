@@ -84,3 +84,33 @@ export async function updateUserPassword(
   );
 }
 
+export async function updateUserProfile(
+  userId: string,
+  input: {
+    avatarUrl: string | null;
+    email: string;
+    name: string;
+  },
+  client?: DbClient
+) {
+  const executor = getExecutor(client);
+
+  const result = await executor.query<UserRecord>(
+    `UPDATE users
+     SET name = $2,
+         email = $3,
+         avatar_url = $4,
+         updated_at = NOW()
+     WHERE id = $1
+     RETURNING id, name, email, password_hash, avatar_url, role, created_at, updated_at;`,
+    [userId, input.name, input.email.toLowerCase(), input.avatarUrl]
+  );
+
+  return result.rows[0] ?? null;
+}
+
+export async function deleteUserById(userId: string, client?: DbClient) {
+  const executor = getExecutor(client);
+
+  await executor.query(`DELETE FROM users WHERE id = $1;`, [userId]);
+}

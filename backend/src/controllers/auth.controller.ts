@@ -9,7 +9,8 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
-  resetPasswordSchema
+  resetPasswordSchema,
+  updateProfileSchema
 } from "../validators/auth.validator.js";
 
 export async function register(request: Request, response: Response) {
@@ -85,3 +86,22 @@ export async function resetPassword(request: Request, response: Response) {
   response.json(successResponse("Password reset successful", {}));
 }
 
+export async function updateProfile(
+  request: AuthenticatedRequest,
+  response: Response
+) {
+  const payload = updateProfileSchema.parse(request.body);
+  const data = await authService.updateProfile(request.authUser, payload);
+
+  response.json(successResponse("Profile updated successfully", data));
+}
+
+export async function deleteAccount(
+  request: AuthenticatedRequest,
+  response: Response
+) {
+  await authService.deleteAccount(request.authUser);
+  clearRefreshTokenCookie(response);
+
+  response.json(successResponse("Account deleted successfully", {}));
+}

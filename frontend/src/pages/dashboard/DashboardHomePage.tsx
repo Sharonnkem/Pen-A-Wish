@@ -43,10 +43,6 @@ export function DashboardHomePage() {
       subtitle="Manage your celebrations, keep share links close, and prepare each event page before guests arrive."
       actions={<Button onClick={handleLogout}>Logout</Button>}
     >
-      {overviewQuery.isLoading || eventsQuery.isLoading ? (
-        <LoadingState label="Gathering your celebration dashboard..." />
-      ) : null}
-
       {eventsQuery.isError || overviewQuery.isError ? (
         <EmptyState
           title="Unable to load dashboard"
@@ -59,8 +55,7 @@ export function DashboardHomePage() {
         />
       ) : null}
 
-      {overview ? (
-        <div className="space-y-8">
+      <div className="space-y-8">
           <section className="space-y-4">
             <div>
               <h2 className="font-display text-3xl text-charcoal-900">Overview</h2>
@@ -76,7 +71,7 @@ export function DashboardHomePage() {
                 description="Total celebrations you have created so far."
               >
                 <p className="font-display text-4xl text-plum-800">
-                  {overview.stats.celebrationsCount}
+                  {overviewQuery.data?.data.stats.celebrationsCount ?? "—"}
                 </p>
               </Card>
               <Card
@@ -86,7 +81,7 @@ export function DashboardHomePage() {
                 description="Celebration pages currently shareable through a public slug."
               >
                 <p className="font-display text-4xl text-plum-800">
-                  {overview.stats.publicLinksCount}
+                  {overviewQuery.data?.data.stats.publicLinksCount ?? "—"}
                 </p>
               </Card>
               <Card
@@ -95,7 +90,7 @@ export function DashboardHomePage() {
                 description="Wishes received across your celebration pages."
               >
                 <p className="font-display text-4xl text-plum-800">
-                  {overview.stats.wishesReceivedCount}
+                  {overviewQuery.data?.data.stats.wishesReceivedCount ?? "—"}
                 </p>
               </Card>
               <Card
@@ -105,7 +100,7 @@ export function DashboardHomePage() {
                 description="Successful gift transactions linked to your events."
               >
                 <p className="font-display text-4xl text-white">
-                  {overview.stats.giftsReceivedCount}
+                  {overviewQuery.data?.data.stats.giftsReceivedCount ?? "—"}
                 </p>
               </Card>
             </div>
@@ -142,9 +137,11 @@ export function DashboardHomePage() {
                 title="Recent wishes"
                 description="The latest heartfelt notes across all of your celebrations."
               >
-                {overview.recentWishes.length ? (
+                {overviewQuery.isLoading && !overviewQuery.data ? (
+                  <LoadingState label="Loading recent wishes..." />
+                ) : overviewQuery.data?.data.recentWishes.length ? (
                   <div className="space-y-3">
-                    {overview.recentWishes.map((wish) => (
+                    {overviewQuery.data.data.recentWishes.map((wish) => (
                       <div
                         key={wish.id}
                         className="rounded-[22px] border border-plum-700/10 bg-white/74 p-4"
@@ -175,9 +172,11 @@ export function DashboardHomePage() {
                 title="Recent gifts"
                 description="A quick look at successful gift moments tied to your celebration pages."
               >
-                {overview.recentGifts.length ? (
+                {overviewQuery.isLoading && !overviewQuery.data ? (
+                  <LoadingState label="Loading recent gifts..." />
+                ) : overviewQuery.data?.data.recentGifts.length ? (
                   <div className="space-y-3">
-                    {overview.recentGifts.map((gift) => (
+                    {overviewQuery.data.data.recentGifts.map((gift) => (
                       <div
                         key={gift.id}
                         className="rounded-[22px] border border-plum-700/10 bg-white/74 p-4"
@@ -210,8 +209,7 @@ export function DashboardHomePage() {
               </Card>
             </div>
           </section>
-        </div>
-      ) : null}
+      </div>
 
       {!eventsQuery.isLoading &&
       !eventsQuery.isError &&

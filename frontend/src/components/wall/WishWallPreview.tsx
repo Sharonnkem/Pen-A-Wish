@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { PublicWishPreview } from "../../types/event";
 import type { WishWallSettings } from "../../types/wish-wall";
@@ -6,9 +6,11 @@ import { cn } from "../../utils/cn";
 
 type WishWallPreviewProps = {
   celebrantName: string;
+  coverImageUrl?: string | null;
   eventDate: string;
   eventTitle: string;
   eventType: string;
+  profileImageUrl?: string | null;
   exportMode?: boolean;
   onRemoveWish?: (wishId: string) => void;
   removingWishId?: string | null;
@@ -47,10 +49,10 @@ const themeAccents = {
 } as const;
 
 const palette = [
-  { pin: "bg-gold-400", tape: "bg-white/80", wash: "rgba(247,217,220,0.18)" },
-  { pin: "bg-blush-300", tape: "bg-cream-100", wash: "rgba(248,238,228,0.2)" },
-  { pin: "bg-plum-700", tape: "bg-white/75", wash: "rgba(232, 239, 245, 0.18)" },
-  { pin: "bg-amber-300", tape: "bg-blush-100", wash: "rgba(255, 235, 214, 0.18)" }
+  { accent: "#d9a84a", pin: "bg-gold-400", tape: "bg-white/80", wash: "rgba(247,217,220,0.18)" },
+  { accent: "#bb80de", pin: "bg-blush-300", tape: "bg-cream-100", wash: "rgba(248,238,228,0.2)" },
+  { accent: "#6b87e1", pin: "bg-plum-700", tape: "bg-white/75", wash: "rgba(232, 239, 245, 0.18)" },
+  { accent: "#e26c9e", pin: "bg-amber-300", tape: "bg-blush-100", wash: "rgba(255, 235, 214, 0.18)" }
 ] as const;
 
 const radiusClasses = {
@@ -73,24 +75,8 @@ function getRotation(index: number) {
 }
 
 function getWallStyleLabel(mode: WishWallSettings["layout"]["mode"]) {
-  switch (mode) {
-    case "collageScrapbook":
-      return "Collage Scrapbook";
-    case "letterTimeline":
-      return "Letter Timeline";
-    case "buntingGarland":
-      return "Bunting Garland";
-    case "openJournal":
-      return "Open Journal";
-    case "masonry":
-      return "Collage Scrapbook";
-    case "grid":
-      return "Letter Timeline";
-    case "stack":
-      return "Open Journal";
-    default:
-      return "Collage Scrapbook";
-  }
+  void mode;
+  return "Wish Wall Poster";
 }
 
 function getLayoutClass(settings: WishWallSettings) {
@@ -102,16 +88,9 @@ function getLayoutClass(settings: WishWallSettings) {
     case "openJournal":
       return "relative grid gap-6 lg:grid-cols-2 lg:gap-x-8";
     case "grid":
-      return cn(
-        "grid gap-4 sm:grid-cols-2",
-        settings.layout.columns === 2
-          ? "xl:grid-cols-2"
-          : settings.layout.columns === 4
-            ? "xl:grid-cols-4"
-            : "xl:grid-cols-3"
-      );
+      return "relative w-full";
     case "stack":
-      return "grid gap-4 max-w-3xl";
+      return "relative w-full";
     case "collageScrapbook":
     default:
       return "relative w-full";
@@ -169,6 +148,662 @@ function getLayoutRotation(mode: WishWallSettings["layout"]["mode"], index: numb
   return getRotation(index);
 }
 
+const scrapbookClipPaths = [
+  "polygon(2% 1%, 96% 0%, 100% 9%, 98% 92%, 94% 100%, 6% 98%, 0 90%, 1% 9%)",
+  "polygon(1% 3%, 97% 1%, 100% 12%, 99% 94%, 92% 100%, 6% 99%, 0 90%, 0 10%)",
+  "polygon(3% 0, 96% 2%, 100% 10%, 97% 96%, 90% 100%, 4% 98%, 0 92%, 2% 8%)",
+  "polygon(0 4%, 95% 0, 100% 8%, 98% 94%, 95% 100%, 7% 97%, 0 91%, 1% 10%)",
+  "polygon(2% 2%, 98% 0, 100% 12%, 96% 96%, 88% 100%, 5% 98%, 0 88%, 1% 10%)"
+] as const;
+
+function getScrapbookClipPath(index: number) {
+  return scrapbookClipPaths[index % scrapbookClipPaths.length];
+}
+
+function hexToRgba(hex: string, alpha: number) {
+  const normalized = hex.replace("#", "");
+  const value =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((char) => `${char}${char}`)
+          .join("")
+      : normalized;
+  const int = Number.parseInt(value, 16);
+  const r = (int >> 16) & 255;
+  const g = (int >> 8) & 255;
+  const b = int & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+type CollageLayer = "micro" | "mini" | "standard" | "featured";
+
+type CollageSlotPoint = {
+  left: number;
+  top: number;
+  width: number;
+};
+
+type CollageRect = {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+};
+
+type CollagePlacement = {
+  left: string;
+  top: string;
+  width: string;
+  minWidth: string;
+};
+
+// The poster's inner canvas is `max-w-[78rem]` wide by default; height is
+// computed dynamically (see computeCollageCanvasHeightPx) so it always has
+// room for every card. Both card position (left/top, given as percentages)
+// and card size (width/height, given in rem/px) are converted through this
+// single width/height pair everywhere, so the collision math and the actual
+// rendered layout can never disagree about where a card's edges are.
+const COLLAGE_CANVAS_WIDTH_PX = 1248; // 78rem
+const COLLAGE_BASE_HEIGHT_PX = 720; // 45rem — live-preview canvas height
+
+// The celebrant portrait/name/wish-count block is centered around
+// (50%, 47%) of the canvas. This safe zone (with a little margin) is always
+// treated as pre-occupied space so no card of any layer can be placed on
+// top of it.
+const HERO_SAFE_ZONE_PCT = {
+  left: 42,
+  top: 25,
+  right: 58,
+  bottom: 70
+} as const;
+
+// The "designed" slot counts each layer's static position table comfortably
+// supports before the canvas needs to grow.
+const LAYER_DESIGN_CAPACITY = {
+  standard: 6,
+  mini: 20,
+  micro: 20
+} as const;
+
+// Generous per-card height budget (px) used only to grow the canvas when a
+// layer exceeds its designed capacity — deliberately larger than a typical
+// card so there's always slack for the collision search to succeed.
+const LAYER_GROWTH_BUDGET_PX = {
+  standard: 190,
+  mini: 90,
+  micro: 65
+} as const;
+
+function computeCollageCanvasHeightPx(
+  standardCount: number,
+  miniCount: number,
+  microCount: number,
+  baseHeightPx = COLLAGE_BASE_HEIGHT_PX
+) {
+  const extraStandard = Math.max(0, standardCount - LAYER_DESIGN_CAPACITY.standard) * LAYER_GROWTH_BUDGET_PX.standard;
+  const extraMini = Math.max(0, miniCount - LAYER_DESIGN_CAPACITY.mini) * LAYER_GROWTH_BUDGET_PX.mini;
+  const extraMicro = Math.max(0, microCount - LAYER_DESIGN_CAPACITY.micro) * LAYER_GROWTH_BUDGET_PX.micro;
+
+  return baseHeightPx + extraStandard + extraMini + extraMicro;
+}
+
+// Maximum characters shown per layer. Capping the text means the estimated
+// height (computed from these same capped strings) can never be exceeded by
+// what's actually rendered — the estimate and the render always agree.
+const LAYER_TEXT_LIMITS: Record<CollageLayer, { message: number; sender: number }> = {
+  featured: { message: 220, sender: 30 },
+  standard: { message: 140, sender: 26 },
+  mini: { message: 90, sender: 22 },
+  micro: { message: 60, sender: 18 }
+};
+
+function truncateText(text: string, maxChars: number) {
+  if (text.length <= maxChars) {
+    return text;
+  }
+
+  return `${text.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
+}
+
+function getCollagePositions(layer: CollageLayer): CollageSlotPoint[] {
+  /*
+   * Layout bands (mirrors the reference poster):
+   *   - upper ring:   cards orbit the hero block from above
+   *   - side ring:    cards fill the left/right gaps around the center
+   *   - lower ring:   cards sit low without touching the bottom edge
+   *
+   * The hero safe zone (x ~32–68%, y ~18–82%) is never touched, so
+   * cards form a clean ring around the celebrant portrait/name block
+   * instead of overlapping it. The order of these points matters: the
+   * most central open spaces are listed first so the layout fills in
+   * toward the middle before it starts using the outer edges.
+   */
+  const featuredPositions: CollageSlotPoint[] = [
+    { left: 3, top: 4, width: 11 }, // top-left corner
+    { left: 22, top: 5, width: 10.5 }, // upper-left center
+    { left: 58, top: 5, width: 10.5 }, // upper-right center
+    { left: 74, top: 4, width: 10.5 }, // top-right corner
+    { left: 5, top: 22, width: 10.5 }, // left column, upper
+    { left: 63, top: 22, width: 10.5 }, // right column, upper
+    { left: 16, top: 38, width: 10.5 }, // inner-left mid
+    { left: 64, top: 39, width: 10.5 }, // inner-right mid
+    { left: 5, top: 72, width: 10.5 }, // bottom-left corner
+    { left: 60, top: 72, width: 10.5 } // bottom-right corner
+  ];
+
+  const standardPositions: CollageSlotPoint[] = [
+    { left: 28, top: 3, width: 10 }, // top strip, center-left
+    { left: 46, top: 3, width: 9.5 }, // top strip, center-right
+    { left: 4, top: 18, width: 9.2 }, // left column, upper
+    { left: 20, top: 19, width: 9.2 }, // left column, inner
+    { left: 52, top: 18, width: 9.2 }, // right column, inner
+    { left: 70, top: 19, width: 9 }, // right column, upper
+    { left: 10, top: 42, width: 9.4 }, // left column, mid
+    { left: 60, top: 41, width: 9.4 }, // right column, mid
+    { left: 24, top: 44, width: 9.2 }, // inner-left mid
+    { left: 46, top: 44, width: 9.2 }, // inner-right mid
+    { left: 22, top: 58, width: 9.4 }, // lower-left inner
+    { left: 48, top: 58, width: 9.4 }, // lower-right inner
+    { left: 18, top: 74, width: 10 }, // bottom strip, left
+    { left: 40, top: 76, width: 9.6 }, // bottom strip, center-left
+    { left: 60, top: 75, width: 9.6 }, // bottom strip, center-right
+    { left: 76, top: 58, width: 9.2 } // right lower column
+  ];
+
+  const miniPositions: CollageSlotPoint[] = [
+    // upper ring fill
+    { left: 8, top: 8, width: 4.4 },
+    { left: 18, top: 10, width: 4.4 },
+    { left: 60, top: 9, width: 4.4 },
+    { left: 70, top: 10, width: 4.4 },
+    { left: 18, top: 24, width: 4.4 },
+    { left: 60, top: 24, width: 4.4 },
+    // side ring fill
+    { left: 4, top: 32, width: 4.4 },
+    { left: 14, top: 32, width: 4.4 },
+    { left: 66, top: 32, width: 4.4 },
+    { left: 76, top: 32, width: 4.4 },
+    { left: 4, top: 46, width: 4.4 },
+    { left: 16, top: 46, width: 4.4 },
+    { left: 64, top: 46, width: 4.4 },
+    { left: 76, top: 46, width: 4.4 },
+    // lower ring fill
+    { left: 6, top: 60, width: 4.4 },
+    { left: 18, top: 62, width: 4.4 },
+    { left: 60, top: 62, width: 4.4 },
+    { left: 72, top: 62, width: 4.4 },
+    { left: 12, top: 76, width: 4.4 },
+    { left: 34, top: 78, width: 4.4 },
+    { left: 58, top: 78, width: 4.4 },
+    { left: 76, top: 78, width: 4.4 }
+  ];
+
+  const microPositions: CollageSlotPoint[] = [
+    // tiny texture near the center gaps first, then toward the edges.
+    { left: 24, top: 10, width: 3.2 },
+    { left: 50, top: 10, width: 3.2 },
+    { left: 24, top: 22, width: 3.2 },
+    { left: 50, top: 22, width: 3.2 },
+    { left: 18, top: 34, width: 3.2 },
+    { left: 56, top: 34, width: 3.2 },
+    { left: 18, top: 48, width: 3.2 },
+    { left: 56, top: 48, width: 3.2 },
+    { left: 28, top: 36, width: 3.2 },
+    { left: 46, top: 36, width: 3.2 },
+    { left: 28, top: 54, width: 3.2 },
+    { left: 46, top: 54, width: 3.2 },
+    { left: 20, top: 62, width: 3.2 },
+    { left: 54, top: 62, width: 3.2 },
+    { left: 14, top: 76, width: 3.2 },
+    { left: 60, top: 76, width: 3.2 },
+    { left: 0, top: 12, width: 3.2 },
+    { left: 0, top: 26, width: 3.2 },
+    { left: 0, top: 50, width: 3.2 },
+    { left: 0, top: 74, width: 3.2 },
+    { left: 0, top: 88, width: 3.2 },
+    { left: 76, top: 8, width: 3.2 },
+    { left: 76, top: 22, width: 3.2 },
+    { left: 76, top: 40, width: 3.2 },
+    { left: 76, top: 74, width: 3.2 },
+    { left: 76, top: 88, width: 3.2 },
+    { left: 10, top: 0, width: 3.2 },
+    { left: 24, top: 0, width: 3.2 },
+    { left: 56, top: 0, width: 3.2 },
+    { left: 68, top: 0, width: 3.2 },
+    { left: 34, top: 0, width: 3.2 },
+    { left: 46, top: 0, width: 3.2 },
+    { left: 12, top: 92, width: 3.2 },
+    { left: 28, top: 92, width: 3.2 },
+    { left: 54, top: 92, width: 3.2 },
+    { left: 68, top: 92, width: 3.2 }
+  ];
+
+  switch (layer) {
+    case "featured":
+      return featuredPositions;
+    case "standard":
+      return standardPositions;
+    case "mini":
+      return miniPositions;
+    case "micro":
+    default:
+      return microPositions;
+  }
+}
+
+function toFloat(value: string) {
+  return Number.parseFloat(value);
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function estimateCollageHeight(wish: PublicWishPreview, layer: CollageLayer, widthRem: number) {
+  const message = wish.message;
+  const senderName = wish.senderName;
+
+  const widthPx = widthRem * 16;
+  const fontSize =
+    layer === "standard" ? 10.5 : layer === "mini" ? 9.6 : 8.8;
+  // A larger per-character width estimate (0.62 vs. the tighter 0.56) means
+  // fewer characters fit per line in our math than in reality, so the line
+  // count — and therefore the height — is never underestimated.
+  const charsPerLine = clampNumber(Math.floor(widthPx / (fontSize * 0.62)), 6, 44);
+  const messageLines = Math.max(1, Math.ceil(message.length / charsPerLine));
+  const senderLines = Math.max(1, Math.ceil(senderName.length / Math.max(charsPerLine, 10)));
+  const basePadding = layer === "standard" ? 64 : layer === "mini" ? 54 : 48;
+  const messageLineHeight = layer === "standard" ? 1.42 : layer === "mini" ? 1.34 : 1.28;
+  const senderHeight = senderLines * fontSize * 1.28;
+  const messageHeight = messageLines * fontSize * messageLineHeight;
+  // Extra fixed cushion on top of the line-based estimate to absorb font
+  // metric variance (the handwritten/cursive font isn't perfectly uniform
+  // width) so the box is always at least as tall as what's rendered.
+  const safetyBuffer = layer === "standard" ? 22 : layer === "mini" ? 18 : 16;
+
+  return Math.ceil(basePadding + senderHeight + messageHeight + safetyBuffer);
+}
+
+function rectsOverlap(a: CollageRect, b: CollageRect, padding = 6) {
+  return !(
+    a.right + padding <= b.left ||
+    a.left >= b.right + padding ||
+    a.bottom + padding <= b.top ||
+    a.top >= b.bottom + padding
+  );
+}
+
+function buildCollageRect(
+  leftPct: number,
+  topPct: number,
+  widthRem: number,
+  heightPx: number,
+  canvasWidthPx: number,
+  canvasHeightPx: number
+) {
+  const left = (leftPct / 100) * canvasWidthPx;
+  const top = (topPct / 100) * canvasHeightPx;
+  const width = widthRem * 16;
+
+  return {
+    left,
+    top,
+    right: left + width,
+    bottom: top + heightPx
+  };
+}
+
+function getCollageHeroRect(canvasWidthPx: number, canvasHeightPx: number) {
+  const marginPx = 10;
+
+  return {
+    left: (HERO_SAFE_ZONE_PCT.left / 100) * canvasWidthPx - marginPx,
+    top: (HERO_SAFE_ZONE_PCT.top / 100) * canvasHeightPx - marginPx,
+    right: (HERO_SAFE_ZONE_PCT.right / 100) * canvasWidthPx + marginPx,
+    bottom: (HERO_SAFE_ZONE_PCT.bottom / 100) * canvasHeightPx + marginPx
+  };
+}
+
+// Exhaustively scans the canvas for any free rect of the required size.
+// Used only when a layer's own designed slots (plus their nearby variants)
+// are all taken, so cards can keep filling the wall without ever
+// overlapping anything already placed.
+function findFreeGridSlot(
+  widthRem: number,
+  heightPx: number,
+  occupied: CollageRect[],
+  canvasWidthPx: number,
+  canvasHeightPx: number,
+  padding = 6
+) {
+  const widthPx = widthRem * 16;
+  const maxLeftPct = clampNumber(100 - (widthPx / canvasWidthPx) * 100, 0, 100);
+  const maxTopPct = clampNumber(100 - (heightPx / canvasHeightPx) * 100, 0, 100);
+  const stepPct = 1;
+  const buildCenterOutValues = (maxPct: number) =>
+    Array.from({ length: Math.floor(maxPct / stepPct) + 1 }, (_, index) => index * stepPct).sort(
+      (a, b) => Math.abs(a - maxPct / 2) - Math.abs(b - maxPct / 2)
+    );
+  const topValues = buildCenterOutValues(maxTopPct);
+  const leftValues = buildCenterOutValues(maxLeftPct);
+
+  for (const topPct of topValues) {
+    for (const leftPct of leftValues) {
+      const rect = buildCollageRect(leftPct, topPct, widthRem, heightPx, canvasWidthPx, canvasHeightPx);
+
+      if (!occupied.some((entry) => rectsOverlap(rect, entry, padding))) {
+        return { leftPct, topPct };
+      }
+    }
+  }
+
+  return null;
+}
+
+function getCollageSlotVariants(layer: CollageLayer, cycle: number) {
+  const cycleBoost = cycle > 0 ? Math.min(cycle, 3) : 0;
+  const spread = layer === "micro" ? 2.2 : layer === "mini" ? 3.6 : 4.8;
+  return [
+    { x: 0, y: 0 },
+    { x: spread + cycleBoost * 0.45, y: 1.25 + cycleBoost * 0.35 },
+    { x: -(spread - 0.45), y: 2 + cycleBoost * 0.55 },
+    { x: spread * 0.55, y: 5.25 + cycleBoost * 0.8 },
+    { x: -(spread * 0.55), y: 5.5 + cycleBoost * 0.8 },
+    { x: spread * 0.8, y: 8 + cycleBoost * 0.9 },
+    { x: -(spread * 0.8), y: 8 + cycleBoost * 0.9 }
+  ];
+}
+
+function getCollagePlacementCandidates(index: number, layer: CollageLayer) {
+  const positions = getCollagePositions(layer);
+  const startIndex = index % positions.length;
+  const cycle = Math.floor(index / positions.length);
+  const orderedIndices = positions.map((_, offset) => (startIndex + offset) % positions.length);
+  const variants = getCollageSlotVariants(layer, cycle);
+
+  return orderedIndices.flatMap((positionIndex) => {
+    const point = positions[positionIndex];
+
+    return variants.map((variant) => ({
+      leftPct: clampNumber(point.left + variant.x, 0, 100),
+      topPct: clampNumber(point.top + variant.y, 0, 100),
+      widthRem: point.width
+    }));
+  });
+}
+
+function buildCollisionSafeCollagePlacements(
+  wishes: PublicWishPreview[],
+  layer: CollageLayer,
+  occupied: CollageRect[],
+  canvasWidthPx: number,
+  canvasHeightPx: number,
+  exportMode = false
+) {
+  const collisionPadding = exportMode ? 10 : 6;
+
+  return wishes.map((wish, index) => {
+    const slotWidthRem = getCollagePositions(layer)[index % getCollagePositions(layer).length].width;
+    const contentWidthRem = Number.parseFloat(getCollageCardWidth(wish, layer, exportMode));
+    const baseWidthRem = contentWidthRem;
+    const baseHeightPx = estimateCollageHeight(wish, layer, baseWidthRem);
+    const candidates = getCollagePlacementCandidates(index, layer);
+
+    for (const candidate of candidates) {
+      const availableRightRem = Math.max(
+        4,
+        ((canvasWidthPx - (candidate.leftPct / 100) * canvasWidthPx) / 16) - 0.5
+      );
+      const widthRem = Math.min(contentWidthRem, availableRightRem);
+      const candidateHeightPx = estimateCollageHeight(wish, layer, widthRem);
+      const rect = buildCollageRect(candidate.leftPct, candidate.topPct, widthRem, candidateHeightPx, canvasWidthPx, canvasHeightPx);
+
+      if (!occupied.some((entry) => rectsOverlap(rect, entry, collisionPadding))) {
+        occupied.push(rect);
+        return {
+          left: `${candidate.leftPct}%`,
+          top: `${candidate.topPct}%`,
+          width: `${widthRem}rem`,
+          minWidth: `${widthRem}rem`
+        } satisfies CollagePlacement;
+      }
+    }
+
+    const widthRem = contentWidthRem;
+    const heightPx = baseHeightPx;
+
+    // The layer's own designed slots (and their nearby variants) are all
+    // taken — exhaustively search the rest of the canvas for free space.
+    const gridSlot = findFreeGridSlot(widthRem, heightPx, occupied, canvasWidthPx, canvasHeightPx, collisionPadding);
+
+    if (gridSlot) {
+      const rect = buildCollageRect(gridSlot.leftPct, gridSlot.topPct, widthRem, heightPx, canvasWidthPx, canvasHeightPx);
+      occupied.push(rect);
+
+      return {
+        left: `${gridSlot.leftPct}%`,
+        top: `${gridSlot.topPct}%`,
+        width: `${widthRem}rem`,
+        minWidth: `${widthRem}rem`
+      } satisfies CollagePlacement;
+    }
+
+    // Absolute last resort — the canvas is genuinely full. Append strictly
+    // below every rect placed so far. This can never overlap anything,
+    // because it starts below the bottom edge of everything already on the
+    // wall, by construction.
+    const widthPx = widthRem * 16;
+    const bottomMostPx = occupied.reduce((max, rect) => Math.max(max, rect.bottom), 0);
+    const stackTopPx = bottomMostPx + 24;
+    const stackLeftPx = clampNumber((index % 6) * (widthPx + 12), 0, Math.max(0, canvasWidthPx - widthPx));
+    const stackRect: CollageRect = {
+      left: stackLeftPx,
+      top: stackTopPx,
+      right: stackLeftPx + widthPx,
+      bottom: stackTopPx + heightPx
+    };
+    occupied.push(stackRect);
+
+    return {
+      left: `${(stackLeftPx / canvasWidthPx) * 100}%`,
+      top: `${(stackTopPx / canvasHeightPx) * 100}%`,
+      width: `${widthRem}rem`,
+      minWidth: `${widthRem}rem`
+    } satisfies CollagePlacement;
+  });
+}
+
+function getCollageCardWidth(
+  wish: PublicWishPreview,
+  layer: CollageLayer,
+  exportMode = false,
+  maxWidth?: string
+) {
+  void maxWidth;
+  const contentLength = wish.message.length;
+  const extra = Math.min(
+    exportMode ? 12 : 10,
+    Math.max(0, Math.ceil(contentLength / (layer === "featured" ? 10 : layer === "standard" ? 13 : 16)))
+  );
+
+  switch (layer) {
+    case "featured":
+      return `${Math.min(exportMode ? 46 : 23.4, (exportMode ? 31 : 12.4) + extra * (exportMode ? 1.9 : 0.98))}rem`;
+    case "standard":
+      return `${Math.min(exportMode ? 42 : 21.8, (exportMode ? 26 : 10.4) + extra * (exportMode ? 2.15 : 1.12))}rem`;
+    case "mini":
+      return `${Math.min(exportMode ? 17 : 8.4, (exportMode ? 10.5 : 5.4) + extra * (exportMode ? 0.75 : 0.3))}rem`;
+    case "micro":
+    default:
+      return `${Math.min(exportMode ? 13 : 6.4, (exportMode ? 8 : 4.2) + extra * (exportMode ? 0.5 : 0.22))}rem`;
+  }
+}
+
+function clampCollageWidth(width: string, maxWidth?: string) {
+  if (!maxWidth) {
+    return width;
+  }
+
+  const widthValue = Number.parseFloat(width);
+  const maxValue = Number.parseFloat(maxWidth);
+
+  if (Number.isNaN(widthValue) || Number.isNaN(maxValue)) {
+    return width;
+  }
+
+  return `${Math.min(widthValue, Math.max(0, maxValue - 0.2))}rem`;
+}
+
+function PosterScrapNote({
+  exportMode,
+  prominence = "mini",
+  isCompact,
+  onRemoveWish,
+  removingWishId,
+  rotation,
+  paperTone,
+  styleVariant,
+  wish
+}: {
+  exportMode: boolean;
+  prominence?: CollageLayer;
+  isCompact: boolean;
+  onRemoveWish?: (wishId: string) => void;
+  removingWishId?: string | null;
+  rotation: number;
+  paperTone: string;
+  styleVariant: (typeof palette)[number];
+  wish: PublicWishPreview;
+}) {
+  const featured = prominence === "featured";
+  const standard = prominence === "standard";
+  const mini = prominence === "mini";
+  const micro = prominence === "micro";
+
+  const sizeClasses = exportMode
+    ? featured
+      ? "px-8 py-7"
+      : standard
+        ? "px-7 py-6"
+        : mini
+          ? "px-6 py-5"
+          : "px-5 py-4"
+    : isCompact
+      ? "px-4 py-3.5"
+      : "px-4.5 py-4";
+
+  const senderClass = exportMode
+    ? featured
+      ? "text-[1.4rem] tracking-[0.26em]"
+      : standard
+        ? "text-[1.26rem] tracking-[0.24em]"
+        : mini
+          ? "text-[1.1rem] tracking-[0.22em]"
+          : "text-[1rem] tracking-[0.2em]"
+    : "text-[0.68rem] tracking-[0.22em]";
+
+  const messageClass = exportMode
+    ? featured
+      ? "mt-3 text-[40px] leading-[1.34]"
+      : standard
+        ? "mt-3 text-[32px] leading-[1.32]"
+        : mini
+          ? "mt-2.5 text-[24px] leading-[1.3]"
+          : "mt-2.5 text-[19px] leading-[1.28]"
+    : "mt-2 text-[12.5px] leading-[1.4]";
+
+  const senderColor = hexToRgba(styleVariant.accent, featured ? 0.94 : standard ? 0.88 : 0.78);
+  const messageColor = hexToRgba(styleVariant.accent, featured ? 0.96 : standard ? 0.9 : 0.82);
+  const displaySender = wish.senderName;
+  const displayMessage = wish.message;
+
+  return (
+    <article
+      className={cn(
+        "relative",
+        exportMode ? "shadow-none" : "",
+        sizeClasses,
+        featured ? "font-medium" : ""
+      )}
+      style={{
+        backgroundColor: paperTone,
+        border: `${featured ? 2 : 1}px solid ${hexToRgba(styleVariant.accent, featured ? 0.58 : standard ? 0.46 : 0.34)}`,
+        boxShadow: exportMode
+          ? "none"
+          : featured
+            ? "0 16px 30px rgba(67,34,53,0.12), 0 0 0 1px rgba(255,255,255,0.62) inset"
+            : standard
+              ? "0 10px 22px rgba(67,34,53,0.08), 0 0 0 1px rgba(255,255,255,0.48) inset"
+              : "0 6px 14px rgba(67,34,53,0.05), 0 0 0 1px rgba(255,255,255,0.38) inset",
+        transform: `rotate(${rotation}deg)`,
+        backgroundImage:
+          "repeating-linear-gradient(180deg, rgba(128,98,68,0.025) 0 1px, transparent 1px 8px), radial-gradient(circle at top left, rgba(255,255,255,0.32), transparent 34%)"
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{ backgroundColor: styleVariant.wash }}
+      />
+      <div
+        className="pointer-events-none absolute left-0 top-0 h-2.5 w-[34%] rounded-br-[0.9rem] opacity-72"
+        style={{ backgroundColor: hexToRgba(styleVariant.accent, 0.12) }}
+      />
+
+      {onRemoveWish ? (
+        <button
+          aria-label={`Remove ${wish.senderName}'s wish from the wall`}
+          className={cn(
+            "absolute right-1.5 top-1.5 z-10 inline-flex items-center justify-center rounded-full bg-white/92 text-[10px] leading-none text-plum-800 shadow-[0_4px_10px_rgba(67,34,53,0.12)] transition hover:bg-white",
+            exportMode ? "h-[1.8rem] w-[1.8rem] text-[13px]" : "h-[1.125rem] w-[1.125rem]"
+          )}
+          disabled={removingWishId === wish.id}
+          type="button"
+          onClick={() => onRemoveWish(wish.id)}
+        >
+          ×
+        </button>
+      ) : null}
+
+      <div className="relative">
+        <p
+          className={cn(
+            featured ? "font-bold" : standard ? "font-semibold" : "font-medium",
+            "uppercase",
+            senderClass
+          )}
+          style={{ color: senderColor }}
+        >
+          {displaySender}
+        </p>
+        <p
+          className={cn(
+            featured ? "font-semibold" : standard ? "font-medium" : "font-normal",
+            "whitespace-normal break-words [overflow-wrap:anywhere] italic",
+            messageClass
+          )}
+          style={{
+            color: messageColor,
+            fontFamily: getTypographyFont("handwritten")
+          }}
+        >
+          {displayMessage}
+        </p>
+
+        {(featured || standard || exportMode) ? (
+          <div
+            className={cn(
+              "rounded-full",
+              featured ? "mt-2.5 h-[3px] w-16" : exportMode ? "mt-3 h-[3px] w-14" : "mt-2 h-px w-7"
+            )}
+            style={{ backgroundColor: hexToRgba(styleVariant.accent, featured ? 0.58 : 0.4) }}
+          />
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
 function WishCard({
   cardTone,
   exportMode,
@@ -201,44 +836,52 @@ function WishCard({
     settings.cardStyle.style === "glass" && !exportMode ? "backdrop-blur-xl" : "",
     exportMode ? "shadow-none" : "",
     layoutMode === "stack" ? "w-full" : "",
-    layoutMode === "letterTimeline" ? "w-full max-w-[28rem]" : "",
-    layoutMode === "openJournal" ? "w-full max-w-[30rem]" : "",
-    layoutMode === "buntingGarland" ? "w-full max-w-[18rem]" : ""
+    layoutMode === "letterTimeline" ? "w-full max-w-[32rem]" : "",
+    layoutMode === "openJournal" ? "w-full max-w-[34rem]" : "",
+    layoutMode === "buntingGarland" ? "w-full max-w-[20rem]" : "",
+    ""
   );
 
   if (layoutMode === "collageScrapbook") {
+    const accentColor = styleVariant.accent;
+    const compactPadClass = isCompact ? "px-3.5 py-2.5" : "px-5 py-3.5";
+    const compactNameClass = isCompact ? "text-[0.42rem] tracking-[0.22em]" : "text-[0.62rem] tracking-[0.28em]";
+    const compactMessageClass = isCompact ? "mt-1.25 text-[8px] leading-[1.24]" : "mt-2 text-[12.5px] leading-[1.34]";
+    const compactLineClass = isCompact ? "mt-2 w-7" : "mt-3 w-14";
+
     return (
       <article
         className={cn(
-          "relative overflow-hidden bg-[#fbf5ec] px-4 py-4 shadow-[0_16px_34px_rgba(67,34,53,0.08)]",
+          `relative overflow-hidden bg-[#fffdf8] ${compactPadClass} shadow-[0_16px_34px_rgba(67,34,53,0.08)]`,
           exportMode ? "shadow-none" : ""
         )}
         style={{
-          clipPath:
-            "polygon(4% 1%, 12% 0%, 22% 3%, 34% 1%, 48% 4%, 63% 1%, 78% 3%, 92% 0%, 100% 9%, 98% 22%, 100% 37%, 97% 51%, 100% 66%, 98% 82%, 100% 94%, 92% 100%, 78% 97%, 64% 99%, 49% 96%, 34% 99%, 20% 97%, 7% 100%, 0 92%, 2% 78%, 0 63%, 3% 48%, 0 34%, 2% 20%, 0 7%)",
-          backgroundImage:
-            "linear-gradient(180deg, rgba(255,255,255,0.68) 0%, rgba(255,255,255,0.18) 100%), radial-gradient(circle at top left, rgba(255,255,255,0.55), transparent 38%)",
+          border: `2px solid ${accentColor}`,
+          boxShadow: "0 16px 34px rgba(67,34,53,0.08), 0 0 0 1px rgba(255,255,255,0.8) inset",
           transform: `rotate(${rotation}deg)`
         }}
       >
-        <div className="pointer-events-none absolute inset-0 opacity-40" style={{ backgroundImage: "repeating-linear-gradient(0deg, rgba(131, 106, 74, 0.03) 0, rgba(131, 106, 74, 0.03) 1px, transparent 1px, transparent 9px)" }} />
+        <div className="pointer-events-none absolute inset-0 opacity-35" style={{ backgroundImage: "repeating-linear-gradient(0deg, rgba(131, 106, 74, 0.03) 0, rgba(131, 106, 74, 0.03) 1px, transparent 1px, transparent 9px)" }} />
         {(wish.senderName.toLowerCase().includes("tunde") || wish.senderName.toLowerCase().includes("james")) ? (
           <div
             className="pointer-events-none absolute left-0 top-0 h-full w-8 bg-[#7b2f4c]/85"
             style={{ clipPath: "polygon(0 0, 100% 10%, 92% 100%, 0 92%)", filter: "drop-shadow(2px 0 4px rgba(67,34,53,0.12))" }}
           />
         ) : null}
-        <div className="relative pt-4">
-          <p className="text-[0.66rem] font-semibold uppercase tracking-[0.24em] text-[#a88a6b]">{wish.senderName}</p>
+        <div className="relative px-2 pt-2.5 pb-2">
+          <p className={`font-semibold uppercase ${compactNameClass}`} style={{ color: accentColor }}>
+            {wish.senderName}
+          </p>
           <p
             className={cn(
-              "mt-2 font-normal italic leading-6 text-[#2f2f2f]",
-              isCompact ? "text-[13px]" : "text-[14px]"
+              "font-normal italic text-[#2f2f2f]",
+              compactMessageClass
             )}
             style={{ fontFamily: getTypographyFont(settings.typography.bodyFont) }}
           >
             {wish.message}
           </p>
+          <div className={`${compactLineClass} h-px rounded-full`} style={{ backgroundColor: `${accentColor}66` }} />
         </div>
       </article>
     );
@@ -332,7 +975,7 @@ function WishCard({
         <button
           aria-label={`Remove ${wish.senderName}'s wish from the wall`}
           className={cn(
-            "absolute left-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/80 bg-white/88 text-plum-800 shadow-[0_10px_22px_rgba(67,34,53,0.12)] transition hover:-translate-y-0.5 hover:bg-white",
+            "absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/80 bg-white/88 text-plum-800 shadow-[0_10px_22px_rgba(67,34,53,0.12)] transition hover:-translate-y-0.5 hover:bg-white",
             exportMode && "shadow-none"
           )}
           disabled={removingWishId === wish.id}
@@ -347,7 +990,7 @@ function WishCard({
         <div className="h-2 w-16 rounded-full" style={{ backgroundColor: theme.accent }} />
         <div className={cn("mt-4 flex items-start justify-between gap-4", isCompact && "gap-2")}>
           <div>
-            <p className="text-2xl text-plum-800" style={{ fontFamily: getTypographyFont(settings.typography.headingFont) }}>
+            <p className="text-xl text-plum-800" style={{ fontFamily: getTypographyFont(settings.typography.headingFont) }}>
               {wish.senderName}
             </p>
             {settings.export.showMetadata ? (
@@ -400,9 +1043,11 @@ function WishCard({
 
 export function WishWallPreview({
   celebrantName,
+  coverImageUrl,
   eventDate,
   eventTitle,
   eventType,
+  profileImageUrl,
   exportMode = false,
   onRemoveWish,
   removingWishId,
@@ -410,6 +1055,9 @@ export function WishWallPreview({
   wishes
 }: WishWallPreviewProps) {
   const [timelinePage, setTimelinePage] = useState(0);
+  const timelineCanvasRef = useRef<HTMLDivElement | null>(null);
+  const [timelineCanvasScale, setTimelineCanvasScale] = useState(1);
+  const [timelineCanvasHeight, setTimelineCanvasHeight] = useState<number | null>(null);
   const [collagePage, setCollagePage] = useState(0);
   const [buntingPage, setBuntingPage] = useState(0);
   const [journalPage, setJournalPage] = useState(0);
@@ -418,6 +1066,8 @@ export function WishWallPreview({
   const bodyFont = getTypographyFont(settings.typography.bodyFont);
   const cardTone = styleClasses[settings.cardStyle.style];
   const wallStyle = settings.layout.mode;
+  const posterWallStyle = "collageScrapbook" as const;
+  const posterWishes = wishes;
   const hasBackgroundImage = settings.background.mode === "image" && settings.background.imageUrl;
   const backgroundStyle =
     settings.background.mode === "solid"
@@ -431,9 +1081,25 @@ export function WishWallPreview({
         : {
             backgroundImage: `linear-gradient(180deg, ${settings.background.gradientStart} 0%, ${settings.background.gradientEnd} 100%)`
           };
+  const posterBackgroundStyle =
+    settings.background.mode === "solid"
+      ? {
+          backgroundColor: settings.background.color,
+          backgroundImage:
+            "radial-gradient(circle at top, rgba(255,255,255,0.24), rgba(255,255,255,0.08) 45%, rgba(255,255,255,0) 100%)"
+        }
+      : settings.background.mode === "image" && hasBackgroundImage
+        ? {
+            backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.58), rgba(255,250,244,0.28)), url(${settings.background.imageUrl})`,
+            backgroundPosition: "center",
+            backgroundSize: "cover"
+          }
+        : {
+            backgroundImage: `linear-gradient(180deg, ${settings.background.gradientStart} 0%, ${settings.background.gradientEnd} 100%)`
+          };
   const timelinePageSize = 4;
   const totalTimelinePages = Math.max(1, Math.ceil(wishes.length / timelinePageSize));
-  const collagePageSize = 9;
+  const collagePageSize = 50;
   const totalCollagePages = Math.max(1, Math.ceil(wishes.length / collagePageSize));
   const buntingPageSize = 8;
   const totalBuntingPages = Math.max(1, Math.ceil(wishes.length / buntingPageSize));
@@ -448,14 +1114,80 @@ export function WishWallPreview({
     return wishes.slice(start, start + timelinePageSize);
   }, [timelinePage, timelinePageSize, wallStyle, wishes]);
 
-  const collageWishes = useMemo(() => {
-    if (wallStyle !== "collageScrapbook") {
+  const collagePageWishes = useMemo(() => {
+    if (posterWallStyle !== "collageScrapbook") {
       return wishes;
     }
 
     const start = collagePage * collagePageSize;
     return wishes.slice(start, start + collagePageSize);
-  }, [collagePage, collagePageSize, wallStyle, wishes]);
+  }, [collagePage, collagePageSize, posterWallStyle, wishes]);
+
+  const arrangedCollageWishes = useMemo(() => {
+    return [...collagePageWishes].sort((a, b) => {
+      const lengthDelta = b.message.length - a.message.length;
+      if (lengthDelta !== 0) {
+        return lengthDelta;
+      }
+
+      return a.senderName.localeCompare(b.senderName);
+    });
+  }, [collagePageWishes]);
+
+  const standardWishes = arrangedCollageWishes.slice(0, 6);
+  const standardWishIds = new Set(standardWishes.map((wish) => wish.id));
+  const backgroundWishes = arrangedCollageWishes.filter((wish) => !standardWishIds.has(wish.id));
+  const miniWishes = backgroundWishes.slice(0, 20);
+  const microWishes = backgroundWishes.slice(20);
+  const collageCanvasWidthPx = COLLAGE_CANVAS_WIDTH_PX;
+  const collageBaseHeightPx = exportMode ? 1800 : COLLAGE_BASE_HEIGHT_PX;
+  const collageExportBottomBufferPx = exportMode ? 720 : 0;
+  const collageCanvasHeightPx = useMemo(
+    () =>
+      computeCollageCanvasHeightPx(
+        standardWishes.length,
+        miniWishes.length,
+        microWishes.length,
+        collageBaseHeightPx
+      ) + collageExportBottomBufferPx,
+    [collageBaseHeightPx, collageExportBottomBufferPx, standardWishes.length, miniWishes.length, microWishes.length]
+  );
+  const collagePlacements = useMemo(() => {
+    if (wallStyle !== "collageScrapbook") {
+      return {
+        micro: [] as CollagePlacement[],
+        mini: [] as CollagePlacement[],
+        standard: [] as CollagePlacement[]
+      };
+    }
+
+    const canvasWidthPx = collageCanvasWidthPx;
+    const canvasHeightPx = collageCanvasHeightPx;
+
+    // Seed the occupied-rect list with the hero exclusion zone so no
+    // card (of any layer) can ever be placed under the celebrant
+    // portrait/name/wish-count block. Standard (largest, most
+    // important) cards are placed first, then mini, then micro, so
+    // smaller background texture yields space to the bigger cards —
+    // matching the visual priority of the reference poster. Every
+    // candidate is checked for pixel-accurate overlap before it's
+    // accepted, with grid-scan and guaranteed-safe stacking fallbacks,
+    // so cards never overlap no matter how many wishes are on the wall.
+    const occupied: CollageRect[] = [getCollageHeroRect(canvasWidthPx, canvasHeightPx)];
+
+    const standard = buildCollisionSafeCollagePlacements(
+      standardWishes,
+      "standard",
+      occupied,
+      canvasWidthPx,
+      canvasHeightPx,
+      exportMode
+    );
+    const mini = buildCollisionSafeCollagePlacements(miniWishes, "mini", occupied, canvasWidthPx, canvasHeightPx, exportMode);
+    const micro = buildCollisionSafeCollagePlacements(microWishes, "micro", occupied, canvasWidthPx, canvasHeightPx, exportMode);
+
+    return { micro, mini, standard };
+  }, [collageCanvasHeightPx, collageCanvasWidthPx, microWishes, miniWishes, standardWishes, wallStyle]);
   const buntingWishes = useMemo(() => {
     if (wallStyle !== "buntingGarland") {
       return wishes;
@@ -474,16 +1206,44 @@ export function WishWallPreview({
   }, [journalPage, journalPageSize, wallStyle, wishes]);
 
   useEffect(() => {
+    if (collagePage > totalCollagePages - 1) {
+      setCollagePage(Math.max(0, totalCollagePages - 1));
+    }
+  }, [collagePage, totalCollagePages]);
+
+  useEffect(() => {
     if (timelinePage > totalTimelinePages - 1) {
       setTimelinePage(Math.max(0, totalTimelinePages - 1));
     }
   }, [timelinePage, totalTimelinePages]);
 
   useEffect(() => {
-    if (collagePage > totalCollagePages - 1) {
-      setCollagePage(Math.max(0, totalCollagePages - 1));
+    if (wallStyle !== "letterTimeline" || exportMode || typeof window === "undefined") {
+      setTimelineCanvasScale(1);
+      setTimelineCanvasHeight(null);
+      return;
     }
-  }, [collagePage, totalCollagePages]);
+
+    const baseWidth = 760;
+
+    const updateTimelineCanvas = () => {
+      const availableWidth = Math.max(0, window.innerWidth - 32);
+      const nextScale = Math.min(availableWidth / baseWidth, 1);
+
+      setTimelineCanvasScale(nextScale);
+
+      if (timelineCanvasRef.current) {
+        setTimelineCanvasHeight(timelineCanvasRef.current.scrollHeight * nextScale);
+      }
+    };
+
+    updateTimelineCanvas();
+    window.addEventListener("resize", updateTimelineCanvas);
+
+    return () => {
+      window.removeEventListener("resize", updateTimelineCanvas);
+    };
+  }, [exportMode, timelineWishes.length, wallStyle]);
 
   useEffect(() => {
     if (buntingPage > totalBuntingPages - 1) {
@@ -497,10 +1257,34 @@ export function WishWallPreview({
     }
   }, [journalPage, totalJournalPages]);
 
+  if (!wishes.length) {
+    return (
+      <section
+        className={cn(
+          "relative overflow-hidden rounded-[36px] border border-white/70 px-0 py-4 shadow-card sm:py-6",
+          exportMode && "shadow-none"
+        )}
+        style={{
+          ...backgroundStyle,
+          fontFamily: bodyFont
+        }}
+      >
+        <div className="flex min-h-[22rem] items-center justify-center px-5 py-8 sm:px-8">
+          <div className="rounded-[30px] border border-dashed border-[#e2c29d] bg-white/62 p-8 text-center text-sm text-charcoal-900/68 shadow-[0_18px_40px_rgba(67,34,53,0.08)]">
+            <p className="text-lg font-semibold text-charcoal-900">Waiting for the first memory</p>
+            <p className="mt-2 text-sm leading-7 text-charcoal-900/68">
+              This scrapbook will fill with torn paper notes as memories arrive.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       className={cn(
-        "relative overflow-hidden rounded-[36px] border border-white/70 p-4 shadow-card sm:p-6",
+        "relative overflow-hidden rounded-[36px] border border-white/70 px-0 py-4 shadow-card sm:py-6",
         exportMode && "shadow-none"
       )}
       style={{
@@ -650,67 +1434,227 @@ export function WishWallPreview({
         </div>
       ) : (
         <div className={getLayoutClass(settings)}>
-          {wallStyle === "collageScrapbook" ? (
-            <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {collageWishes.length ? (
-                collageWishes.map((wish, index) => (
-                  <div
-                    key={wish.id}
-                    className={cn(
-                      "transform",
-                      index % 3 === 0 ? "sm:-mt-1 sm:rotate-[-1.5deg]" : "",
-                      index % 3 === 1 ? "sm:mt-4 sm:rotate-[1.2deg]" : "",
-                      index % 3 === 2 ? "sm:-mt-2 sm:rotate-[-0.8deg]" : ""
-                    )}
-                  >
-                    <WishCard
-                      cardTone={cardTone}
-                      exportMode={exportMode}
-                      isCompact={settings.cardStyle.density === "compact"}
-                      onRemoveWish={onRemoveWish}
-                      removingWishId={removingWishId}
-                      rotation={getLayoutRotation(wallStyle, index)}
-                      settings={settings}
-                      styleVariant={palette[index % palette.length]}
-                      theme={theme}
-                      layoutMode={wallStyle}
-                      wish={wish}
-                    />
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-[30px] border border-dashed border-[#e2c29d] bg-white/62 p-8 text-center text-sm text-charcoal-900/68">
-                  <p className="text-lg font-semibold text-charcoal-900">Waiting for the first wish</p>
-                  <p className="mt-2">This scrapbook will fill with torn paper notes as wishes arrive.</p>
-                </div>
+          {posterWallStyle === "collageScrapbook" ? (
+            <div
+              className={cn(
+                "relative overflow-hidden rounded-[42px] border border-[#ead7c1] shadow-[0_32px_80px_rgba(67,34,53,0.12)]",
+                exportMode ? "px-3 py-3 sm:px-4 sm:py-4" : "px-4 py-3 sm:px-6 sm:py-4"
               )}
-              {!exportMode && totalCollagePages > 1 ? (
-                <div className="col-span-full mt-2 flex items-center justify-center gap-3">
-                  <button
-                    className="inline-flex h-9 items-center rounded-full border border-[#ead9c2] bg-white/84 px-4 text-xs font-semibold uppercase tracking-[0.18em] text-plum-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
-                    disabled={collagePage === 0}
-                    type="button"
-                    onClick={() => setCollagePage((value) => Math.max(0, value - 1))}
-                  >
-                    Prev
-                  </button>
-                  <span className="text-[0.68rem] uppercase tracking-[0.22em] text-charcoal-900/55">
-                    Page {collagePage + 1} of {totalCollagePages}
-                  </span>
-                  <button
-                    className="inline-flex h-9 items-center rounded-full border border-[#ead9c2] bg-white/84 px-4 text-xs font-semibold uppercase tracking-[0.18em] text-plum-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
-                    disabled={collagePage >= totalCollagePages - 1}
-                    type="button"
-                    onClick={() => setCollagePage((value) => Math.min(totalCollagePages - 1, value + 1))}
-                  >
-                    Next
-                  </button>
+              style={posterBackgroundStyle}
+            >
+              <div
+                className="pointer-events-none absolute inset-0 opacity-70"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle at 12% 14%, rgba(255, 199, 226, 0.25), transparent 12%), radial-gradient(circle at 86% 12%, rgba(191, 168, 255, 0.22), transparent 11%), radial-gradient(circle at 18% 78%, rgba(255, 220, 152, 0.18), transparent 12%), radial-gradient(circle at 78% 76%, rgba(122, 186, 255, 0.18), transparent 12%)"
+                }}
+              />
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.82),transparent_24%),radial-gradient(circle_at_top_right,rgba(255,192,203,0.12),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(110,61,88,0.08),transparent_32%)]" />
+              <div
+                className={cn("relative mx-auto", exportMode ? "max-w-none" : "max-w-[78rem]")}
+                style={{ minHeight: `${collageCanvasHeightPx / 16}rem` }}
+              >
+                <div className="absolute left-1/2 top-[47%] z-20 w-[12rem] -translate-x-1/2 -translate-y-1/2 text-center">
+                  <div className="mx-auto flex h-[5.8rem] w-[5.8rem] items-center justify-center overflow-hidden rounded-full border-[6px] border-white bg-[radial-gradient(circle_at_top,#fff7ea,#ebcda7)] shadow-[0_24px_44px_rgba(67,34,53,0.18)]">
+                    {(profileImageUrl ?? coverImageUrl) ? (
+                      <img
+                        alt={`${celebrantName} profile`}
+                        className="h-full w-full object-cover"
+                        crossOrigin="anonymous"
+                        src={profileImageUrl ?? coverImageUrl ?? ""}
+                      />
+                    ) : (
+                      <span className="text-4xl leading-none text-[#5f324a]" style={{ fontFamily: headingFont }}>
+                        {celebrantName
+                          .split(" ")
+                          .filter(Boolean)
+                          .map((part) => part[0])
+                          .slice(0, 2)
+                          .join("")}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-3.5 text-[0.62rem] font-semibold uppercase tracking-[0.34em] text-[#6f5680]">
+                    Good vibes for
+                  </p>
+                  <h3 className="mt-1 text-[2.45rem] leading-[0.92] text-[#6a3f7a]" style={{ fontFamily: fontFamilies.handwritten }}>
+                    {celebrantName}
+                  </h3>
+                  <p className="mx-auto mt-2.5 max-w-[11rem] text-[0.82rem] leading-6 text-charcoal-900/72">
+                    A keepsake of love and wishes.
+                  </p>
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#edd8bc] bg-white/88 px-3.5 py-1.5 text-[0.78rem] text-plum-800 shadow-[0_10px_24px_rgba(67,34,53,0.08)]">
+                    <span className="text-lg leading-none">♥</span>
+                    <span className="font-semibold">{wishes.length} Wishes</span>
+                  </div>
                 </div>
-              ) : null}
+
+                <div className="absolute left-[13%] top-[10%] text-[0.9rem] leading-5 text-[#d84e92]" style={{ fontFamily: fontFamilies.handwritten }}>
+                  Keep being you
+                  <span className="ml-1 text-lg">♡</span>
+                </div>
+
+                {microWishes.length ? (
+                  microWishes.map((wish, index) => {
+                    const placement = collagePlacements.micro[index];
+
+                    return (
+                      <div
+                        key={`micro-${wish.id}`}
+                        className="absolute z-[0] opacity-70"
+                        style={{
+                          left: placement.left,
+                          top: placement.top,
+                          width: placement.width,
+                          minWidth: placement.width
+                        }}
+                      >
+                        <PosterScrapNote
+                          exportMode={exportMode}
+                          prominence="micro"
+                          isCompact
+                          onRemoveWish={onRemoveWish}
+                          removingWishId={removingWishId}
+                          rotation={getRotation(index) * 0.2}
+                          paperTone={settings.background.mode === "solid"
+                            ? settings.background.color
+                            : settings.background.mode === "gradient"
+                              ? settings.background.gradientStart
+                              : "rgba(248, 241, 234, 0.88)"}
+                          styleVariant={palette[index % palette.length]}
+                          wish={wish}
+                        />
+                      </div>
+                    );
+                  })
+                ) : null}
+
+                {miniWishes.length ? (
+                  miniWishes.map((wish, index) => {
+                    const placement = collagePlacements.mini[index];
+
+                    return (
+                      <div
+                        key={`mini-${wish.id}`}
+                        className="absolute z-[1] opacity-90"
+                        style={{
+                          left: placement.left,
+                          top: placement.top,
+                          width: placement.width,
+                          minWidth: placement.width
+                        }}
+                      >
+                        <PosterScrapNote
+                          exportMode={exportMode}
+                          prominence="mini"
+                          isCompact
+                          onRemoveWish={onRemoveWish}
+                          removingWishId={removingWishId}
+                          rotation={getRotation(index) * 0.32}
+                          paperTone={settings.background.mode === "solid"
+                            ? settings.background.color
+                            : settings.background.mode === "gradient"
+                              ? settings.background.gradientStart
+                              : "rgba(248, 241, 234, 0.88)"}
+                          styleVariant={palette[index % palette.length]}
+                          wish={wish}
+                        />
+                      </div>
+                    );
+                  })
+                ) : null}
+
+                {standardWishes.length ? (
+                  standardWishes.map((wish, index) => {
+                    const placement = collagePlacements.standard[index];
+
+                    return (
+                      <div
+                        key={`standard-${wish.id}`}
+                        className="absolute z-[5] opacity-100"
+                        style={{
+                          left: placement.left,
+                          top: placement.top,
+                          width: placement.width,
+                          minWidth: placement.width
+                        }}
+                      >
+                        <PosterScrapNote
+                          exportMode={exportMode}
+                          prominence="standard"
+                          isCompact={settings.cardStyle.density === "compact"}
+                          onRemoveWish={onRemoveWish}
+                          removingWishId={removingWishId}
+                          rotation={getRotation(index + 3) * 0.5}
+                          paperTone={
+                            settings.background.mode === "solid"
+                              ? settings.background.color
+                              : settings.background.mode === "gradient"
+                                ? settings.background.gradientStart
+                                : "rgba(248, 241, 234, 0.92)"
+                          }
+                          styleVariant={palette[(index + 2) % palette.length]}
+                          wish={wish}
+                        />
+                      </div>
+                    );
+                  })
+                ) : null}
+
+                {collagePageWishes.length ? null : (
+                  <div className="absolute inset-x-4 top-1/2 z-30 -translate-y-1/2 rounded-[30px] border border-dashed border-[#e2c29d] bg-white/72 p-8 text-center text-sm text-charcoal-900/68">
+                    <p className="text-lg font-semibold text-charcoal-900">Waiting for the first wish</p>
+                    <p className="mt-2">This wall will fill with wishes as they arrive.</p>
+                  </div>
+                )}
+
+                <div className="pointer-events-none absolute left-[3%] top-[10%] text-2xl text-[#f2c66a]">✦</div>
+                <div className="pointer-events-none absolute right-[4%] top-[14%] text-3xl text-[#c58de6]">♡</div>
+                <div className="pointer-events-none absolute left-[10%] bottom-[18%] text-3xl text-[#ef8ab0]">☆</div>
+                <div className="pointer-events-none absolute right-[14%] bottom-[8%] text-3xl text-[#75b6f5]">✧</div>
+                <div className="pointer-events-none absolute left-[78%] top-[50%] text-4xl text-[#f39ac1]">◯</div>
+
+                <div className="pointer-events-none absolute left-[22%] top-[22%] text-3xl text-[#f2c66a]">✦</div>
+                <div className="pointer-events-none absolute right-[18%] top-[20%] text-4xl text-[#c58de6]">♡</div>
+                <div className="pointer-events-none absolute left-[8%] bottom-[24%] text-4xl text-[#ef8ab0]">☆</div>
+                <div className="pointer-events-none absolute right-[10%] bottom-[10%] text-4xl text-[#75b6f5]">✧</div>
+                <div className="pointer-events-none absolute left-[64%] top-[58%] text-5xl text-[#f39ac1]">◯</div>
+                <div className="pointer-events-none absolute left-[31%] top-[14%] text-2xl text-[#f39ac1]">❀</div>
+                <div className="pointer-events-none absolute right-[31%] top-[15%] text-2xl text-[#f2c66a]">✿</div>
+                <div className="pointer-events-none absolute left-[17%] bottom-[14%] text-3xl text-[#c58de6]">✦</div>
+                <div className="pointer-events-none absolute right-[24%] bottom-[15%] text-3xl text-[#ef8ab0]">♡</div>
+                <div className="pointer-events-none absolute left-[50%] top-[81%] text-2xl text-[#75b6f5]">✧</div>
+                <div className="pointer-events-none absolute right-[8%] top-[38%] text-2xl text-[#f2c66a]">★</div>
+
+                {!exportMode && totalCollagePages > 1 ? (
+                  <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center justify-center gap-3 rounded-full border border-[#ead9c2] bg-white/86 px-4 py-2 shadow-[0_8px_18px_rgba(67,34,53,0.06)] backdrop-blur-sm">
+                    <button
+                      className="inline-flex h-9 items-center rounded-full border border-[#ead9c2] bg-white px-4 text-sm text-plum-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+                      disabled={collagePage === 0}
+                      type="button"
+                      onClick={() => setCollagePage((value) => Math.max(0, value - 1))}
+                    >
+                      Prev
+                    </button>
+                    <span className="text-xs uppercase tracking-[0.22em] text-charcoal-900/55">
+                      Page {collagePage + 1} of {totalCollagePages}
+                    </span>
+                    <button
+                      className="inline-flex h-9 items-center rounded-full border border-[#ead9c2] bg-white px-4 text-sm text-plum-800 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-45"
+                      disabled={collagePage >= totalCollagePages - 1}
+                      type="button"
+                      onClick={() => setCollagePage((value) => Math.min(totalCollagePages - 1, value + 1))}
+                    >
+                      Next
+                    </button>
+                  </div>
+                ) : null}
+
+              </div>
             </div>
           ) : wallStyle === "letterTimeline" ? (
-            <>
-              <div className="pointer-events-none absolute left-1/2 top-2 hidden h-[calc(100%-1rem)] w-px -translate-x-1/2 bg-[#c78f68] lg:block" />
+            <div className="mx-auto w-[760px] max-w-none origin-top scale-[0.34] sm:scale-[0.44] md:scale-[0.56] lg:w-full lg:scale-100">
+              <div className="pointer-events-none absolute left-1/2 top-2 h-[calc(100%-1rem)] w-px -translate-x-1/2 bg-[#c78f68]" />
               {timelineWishes.length ? (
                 timelineWishes.map((wish, index) => {
                   const isLeft = index % 2 === 0;
@@ -718,12 +1662,12 @@ export function WishWallPreview({
                   return (
                     <div
                       key={wish.id}
-                      className="relative grid w-full gap-4 py-5 lg:grid-cols-2 lg:gap-x-12 lg:py-5"
+                      className="relative grid w-full grid-cols-2 gap-x-12 py-5"
                     >
                       <div
                         className={cn(
-                          "w-full max-w-[280px] lg:self-center",
-                          isLeft ? "lg:col-start-1 lg:justify-self-end" : "lg:col-start-2 lg:justify-self-start"
+                          "w-full max-w-[280px] self-center",
+                          isLeft ? "col-start-1 justify-self-end" : "col-start-2 justify-self-start"
                         )}
                       >
                         <WishCard
@@ -741,7 +1685,7 @@ export function WishWallPreview({
                         />
                       </div>
 
-                      <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 lg:flex">
+                      <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex">
                         <div className="flex h-6 w-6 items-center justify-center rounded-full border border-[#f0e0ca] bg-[#f8f1ea] shadow-[0_8px_18px_rgba(67,34,53,0.08)]">
                           <span className="h-2.5 w-2.5 rounded-full bg-[#7f3650]" />
                         </div>
@@ -750,7 +1694,7 @@ export function WishWallPreview({
                   );
                 })
               ) : (
-                <div className="rounded-[30px] border border-dashed border-plum-700/18 bg-white/70 p-8 text-center text-sm text-charcoal-900/68 lg:col-span-2">
+                <div className="col-span-2 rounded-[30px] border border-dashed border-plum-700/18 bg-white/70 p-8 text-center text-sm text-charcoal-900/68">
                   <p className="text-lg font-semibold text-charcoal-900">Waiting for the first wish</p>
                   <p className="mt-2">
                     The timeline is ready. As wishes arrive, they will appear here as floating letters.
@@ -783,7 +1727,7 @@ export function WishWallPreview({
               <div className="pointer-events-none absolute bottom-0 left-1/2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full bg-[#4b4a49] shadow-[0_16px_30px_rgba(37,35,34,0.32)]">
                 <span className="text-lg leading-none text-white">↓</span>
               </div>
-            </>
+            </div>
           ) : wallStyle === "buntingGarland" ? (
             <>
               <div className="pointer-events-none absolute left-4 right-4 top-8 h-px border-t border-dashed border-plum-700/20" />
@@ -807,9 +1751,11 @@ export function WishWallPreview({
                 ))
               ) : (
                 <div className="rounded-[30px] border border-dashed border-plum-700/18 bg-white/70 p-8 text-center text-sm text-charcoal-900/68 lg:col-span-2">
-                  <p className="text-lg font-semibold text-charcoal-900">Waiting for the first wish</p>
+                  <p className="text-lg font-semibold text-charcoal-900">
+                    Waiting for the first memory
+                  </p>
                   <p className="mt-2">
-                    The editor is ready. As wishes arrive, they will appear here as scrapbook-style cards.
+                    This scrapbook will fill with torn paper notes as memories arrive.
                   </p>
                 </div>
               )}
@@ -857,9 +1803,9 @@ export function WishWallPreview({
             ))
           ) : (
             <div className="rounded-[30px] border border-dashed border-plum-700/18 bg-white/70 p-8 text-center text-sm text-charcoal-900/68 lg:col-span-2">
-              <p className="text-lg font-semibold text-charcoal-900">Waiting for the first wish</p>
+              <p className="text-lg font-semibold text-charcoal-900">Waiting for the first memory</p>
               <p className="mt-2">
-                The editor is ready. As wishes arrive, they will appear here as scrapbook-style cards.
+                This scrapbook will fill with torn paper notes as memories arrive.
               </p>
             </div>
           )}
@@ -868,7 +1814,3 @@ export function WishWallPreview({
     </section>
   );
 }
-
-
-
-

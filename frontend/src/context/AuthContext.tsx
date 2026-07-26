@@ -11,6 +11,7 @@ import { authService } from "../services/auth.service";
 import {
   clearStoredSession,
   getAccessToken,
+  getAccessTokenExpiryMs,
   getStoredUser,
   setAccessToken,
   setStoredUser
@@ -22,7 +23,13 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isInitializing: boolean;
   login: (input: { email: string; password: string }) => Promise<AuthUser>;
+  deleteAccount: () => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (input: {
+    avatarUrl: string | null;
+    email: string;
+    name: string;
+  }) => Promise<AuthUser>;
   refreshSession: () => Promise<void>;
   register: (input: {
     email: string;
@@ -70,26 +77,40 @@ export function AuthProvider({ children }: PropsWithChildren) {
         return;
       }
 
-      try {
-        const response = await authService.refreshToken();
+      const expiresAt = getAccessTokenExpiryMs(storedAccessToken);
+      const isTokenFresh = expiresAt ? expiresAt > Date.now() + 60_000 : false;
 
-        if (!mounted) {
-          return;
-        }
-
-        persistSession(response.data.accessToken, response.data.user);
-        setUser(response.data.user);
-      } catch {
-        if (!mounted) {
-          return;
-        }
-
-        clearStoredSession();
-        setUser(null);
-      } finally {
+      if (!isTokenFresh) {
         if (mounted) {
+          setUser(storedUser);
           setIsInitializing(false);
         }
+
+        void authService
+          .refreshToken()
+          .then((response) => {
+            if (!mounted) {
+              return;
+            }
+
+            persistSession(response.data.accessToken, response.data.user);
+            setUser(response.data.user);
+          })
+          .catch(() => {
+            if (!mounted) {
+              return;
+            }
+
+            clearStoredSession();
+            setUser(null);
+          });
+
+        return;
+      }
+
+      if (mounted) {
+        setUser(storedUser);
+        setIsInitializing(false);
       }
     }
 
@@ -116,6 +137,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setUser(response.data.user);
         return response.data.user;
       },
+      async deleteAccount() {
+        await authService.deleteAccount();
+        clearStoredSession();
+        setUser(null);
+      },
       async logout() {
         try {
           await authService.logout();
@@ -123,6 +149,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
           clearStoredSession();
           setUser(null);
         }
+      },
+      async updateProfile(input) {
+        const response = await authService.updateProfile(input);
+        if (response.data.accessToken) {
+          persistSession(response.data.accessToken, response.data.user);
+        } else {
+          setStoredUser(response.data.user);
+        }
+        setUser(response.data.user);
+        return response.data.user;
       },
       async refreshSession() {
         const response = await authService.refreshToken();

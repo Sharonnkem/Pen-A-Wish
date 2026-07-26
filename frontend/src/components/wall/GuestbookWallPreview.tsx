@@ -343,7 +343,7 @@ function GuestbookCard({
           type="button"
           onClick={() => onRemoveEntry(entry.id)}
         >
-          <span className="text-lg leading-none">×</span>
+          <span className="text-lg leading-none">�</span>
         </button>
       ) : null}
 
@@ -774,7 +774,7 @@ export function GuestbookWallPreview({
                 </div>
               ) : null}
               <div className="pointer-events-none absolute bottom-0 left-1/2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full bg-[#4b4a49] shadow-[0_16px_30px_rgba(37,35,34,0.32)]">
-                <span className="text-lg leading-none text-white">↓</span>
+                <span className="text-lg leading-none text-white">?</span>
               </div>
             </>
           ) : wallStyle === "buntingGarland" ? (

@@ -1,5 +1,5 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 import { Button } from "../common/Button";
 import { useAuth } from "../../context/AuthContext";
@@ -28,8 +28,15 @@ export function DashboardLayout({
   title
 }: DashboardLayoutProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout, user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const isCelebrationsIndex =
+    location.pathname === "/celebrations" ||
+    (location.pathname.startsWith("/celebrations/") && location.pathname !== "/celebrations/new");
+  const isCreateCelebrationRoute = location.pathname === "/celebrations/new";
+  const isWalletRoute = location.pathname.startsWith("/wallet");
+  const isSettingsRoute = location.pathname.startsWith("/settings");
 
   async function handleLogout() {
     await logout();
@@ -98,22 +105,23 @@ export function DashboardLayout({
 
             <nav className="mt-5 grid gap-2">
               {navLinks.map((link) => (
-                <NavLink
+                <Link
                   key={link.to}
                   to={link.to}
-                  end={link.to === "/dashboard"}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center justify-between rounded-[20px] px-4 py-3 text-sm transition",
-                      isActive
-                        ? "bg-white text-plum-800 shadow-[0_14px_30px_rgba(17,13,18,0.18)]"
-                        : "text-white/84 hover:bg-white/10 hover:text-white"
-                    )
-                  }
+                  className={cn(
+                    "flex items-center justify-between rounded-[20px] px-4 py-3 text-sm transition",
+                    (link.to === "/celebrations" && isCelebrationsIndex) ||
+                      (link.to === "/celebrations/new" && isCreateCelebrationRoute) ||
+                      (link.to === "/dashboard" && location.pathname === "/dashboard") ||
+                      (link.to === "/wallet" && isWalletRoute) ||
+                      (link.to === "/settings" && isSettingsRoute)
+                      ? "bg-white text-plum-800 shadow-[0_14px_30px_rgba(17,13,18,0.18)]"
+                      : "text-white/84 hover:bg-white/10 hover:text-white"
+                  )}
                 >
                   <span>{link.label}</span>
                   <span aria-hidden="true">{"->"}</span>
-                </NavLink>
+                </Link>
               ))}
 
               {user?.role === "admin" ? (

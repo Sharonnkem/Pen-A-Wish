@@ -10,7 +10,7 @@ import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { eventService } from "../../services/event.service";
 import {
   buildCelebrationShareMessage,
-  getPublicEventUrl
+  getCelebrationShareUrl
 } from "../../utils/share";
 import { getCelebrationPreviewImageUrl } from "../../utils/share";
 
@@ -38,7 +38,7 @@ export function CelebrationDetailsPage() {
     if (!event) {
       return "";
     }
-    return getPublicEventUrl(event.slug);
+    return getCelebrationShareUrl(event.slug);
   }, [event]);
   const shareMessage = useMemo(
     () =>

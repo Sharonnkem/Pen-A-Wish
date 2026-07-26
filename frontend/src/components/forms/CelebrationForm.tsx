@@ -195,6 +195,24 @@ export function CelebrationForm({
     setCropTarget(target);
   }
 
+  function clearImage(target: "profile" | "cover") {
+    if (target === "profile") {
+      setProfileFile(null);
+      setProfileCropSource(null);
+      setProfileImageUrl("");
+    } else {
+      setCoverFile(null);
+      setCoverCropSource(null);
+      setCoverImageUrl("");
+    }
+
+    showToast({
+      title: `${target === "profile" ? "Profile" : "Cover"} image removed`,
+      description: "Save the celebration to keep this change.",
+      tone: "success"
+    });
+  }
+
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
       <ImageCropModal
@@ -379,11 +397,20 @@ export function CelebrationForm({
                 }}
               />
               {profilePreview ? (
-                <img
-                  alt="Profile preview"
-                  className="h-48 w-full rounded-[24px] object-cover shadow-card"
-                  src={profilePreview}
-                />
+                <div className="space-y-3">
+                  <img
+                    alt="Profile preview"
+                    className="h-48 w-full rounded-[24px] object-cover shadow-card"
+                    src={profilePreview}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => clearImage("profile")}
+                  >
+                    Delete photo
+                  </Button>
+                </div>
               ) : (
                 <div className="rounded-[24px] border border-dashed border-plum-700/20 bg-white/70 px-4 py-10 text-center text-sm text-charcoal-900/58">
                   Profile image preview appears here.
@@ -406,11 +433,20 @@ export function CelebrationForm({
                 }}
               />
               {coverPreview ? (
-                <img
-                  alt="Cover preview"
-                  className="h-48 w-full rounded-[24px] object-cover shadow-card"
-                  src={coverPreview}
-                />
+                <div className="space-y-3">
+                  <img
+                    alt="Cover preview"
+                    className="h-48 w-full rounded-[24px] object-cover shadow-card"
+                    src={coverPreview}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => clearImage("cover")}
+                  >
+                    Delete photo
+                  </Button>
+                </div>
               ) : (
                 <div className="rounded-[24px] border border-dashed border-plum-700/20 bg-white/70 px-4 py-10 text-center text-sm text-charcoal-900/58">
                   Cover image preview appears here.

@@ -26,7 +26,7 @@ export function ContactPage() {
       <div className="space-y-6">
         <Card
           title="How to contact us"
-          description="Email is the best channel for Version 1 support so we can keep a clean record of celebration, payment, or moderation issues."
+          description="Email is the best channel for support so we can keep a clean record of celebration, payment, or moderation issues."
         >
           <div className="space-y-4 text-sm leading-7 text-charcoal-900/72">
             <p>

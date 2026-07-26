@@ -27,6 +27,7 @@ export const requireAuth: RequestHandler = (
         }
 
         request.authUser = {
+          avatarUrl: user.avatar_url,
           email: user.email,
           id: user.id,
           name: user.name,

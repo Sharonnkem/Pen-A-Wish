@@ -34,6 +34,7 @@ const defaultSettings: WishWallSettings = {
     showReactions: true,
     showStats: true
   },
+  featuredWishIds: [],
   layout: {
     columns: 3,
     mode: "collageScrapbook"
@@ -68,10 +69,7 @@ const typographyOptions = [
 ] as const;
 
 const layoutModeOptions = [
-  { label: "Collage Scrapbook", value: "collageScrapbook" as const },
-  { label: "Letter Timeline", value: "letterTimeline" as const },
-  { label: "Bunting Garland", value: "buntingGarland" as const },
-  { label: "Open Journal", value: "openJournal" as const }
+  { label: "Wish Wall Poster", value: "collageScrapbook" as const }
 ] satisfies Array<{
   label: string;
   value: WishWallSettings["layout"]["mode"];
@@ -82,6 +80,7 @@ function cloneSettings(settings: WishWallSettings): WishWallSettings {
     background: { ...settings.background },
     cardStyle: { ...settings.cardStyle },
     export: { ...settings.export },
+    featuredWishIds: [...(settings.featuredWishIds ?? [])],
     layout: { ...settings.layout },
     themePreset: settings.themePreset,
     typography: { ...settings.typography }
@@ -406,24 +405,12 @@ export function WallStudioPage() {
     );
   }
 
-  const saveStatusLabel =
-    saveState === "saving"
-      ? "Saving changes..."
-      : saveState === "saved"
-        ? "All changes saved"
-        : saveState === "error"
-          ? "Save failed"
-          : "Ready";
-
   return (
     <DashboardLayout
       title={wallEvent.title}
       subtitle="Customize the wall before exporting it as a keepsake. The preview updates live as you make changes."
       actions={
         <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-full border border-plum-700/10 bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-plum-700">
-            {saveStatusLabel}
-          </span>
           <Button variant="secondary" onClick={() => navigate("/dashboard")}>
             Back to dashboard
           </Button>
@@ -700,13 +687,15 @@ export function WallStudioPage() {
             </div>
           </details>
 
-                              <details className="group rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
+          <details className="group rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-plum-700">
                   Layout
                 </p>
-                <p className="mt-2 text-sm text-charcoal-900/62">How the cards arrange on the wall.</p>
+                <p className="mt-2 text-sm text-charcoal-900/62">
+                  Standard cards arranged in a clean, readable grid.
+                </p>
               </div>
               <span className="text-2xl text-plum-700 transition-transform duration-200 group-open:rotate-180">
                 ⌄
@@ -737,7 +726,7 @@ export function WallStudioPage() {
 
             </div>
           </details>
-<details className="group rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
+          <details className="group rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-plum-700">
@@ -835,10 +824,12 @@ export function WallStudioPage() {
 
           <div className="overflow-hidden rounded-[36px]">
             {exportTarget === "guestbook" ? (
-              <GuestbookWallPreview
+            <GuestbookWallPreview
                 celebrantName={eventDetails.celebrantName}
+                coverImageUrl={eventDetails.coverImageUrl}
                 eventDate={eventDetails.eventDate}
                 eventTitle={guestbookEvent.title}
+                profileImageUrl={eventDetails.profileImageUrl}
                 entries={guestbookQuery.data?.data.entries ?? []}
                 settings={settings}
                 onRemoveEntry={(entryId) => hideGuestbookMutation.mutate(entryId)}
@@ -847,11 +838,13 @@ export function WallStudioPage() {
                 }
               />
             ) : (
-              <WishWallPreview
+            <WishWallPreview
                 celebrantName={eventDetails.celebrantName}
+                coverImageUrl={eventDetails.coverImageUrl}
                 eventDate={eventDetails.eventDate}
                 eventTitle={wallEvent.title}
                 eventType={eventDetails.eventType}
+                profileImageUrl={eventDetails.profileImageUrl}
                 onRemoveWish={(wishId) => hideWishMutation.mutate(wishId)}
                 removingWishId={
                   hideWishMutation.isPending ? hideWishMutation.variables ?? null : null
@@ -888,6 +881,7 @@ export function WallStudioPage() {
     </DashboardLayout>
   );
 }
+
 
 
 

@@ -24,6 +24,7 @@ import {
 } from "../controllers/wish-wall.controller.js";
 import {
   getEventReactions,
+  getEventShareImage,
   submitEventReaction,
   submitWish,
   submitWishReaction
@@ -47,6 +48,7 @@ eventRouter.patch(
 );
 eventRouter.get("/public/events/:slug", asyncHandler(getPublicEventBySlug));
 eventRouter.get("/public/events/:slug/wall", asyncHandler(getPublicWishWallBySlug));
+eventRouter.get("/public/events/:slug/share-image.svg", asyncHandler(getEventShareImage));
 eventRouter.post("/public/events/:slug/wishes", asyncHandler(submitWish));
 eventRouter.post("/public/events/:slug/guestbook", asyncHandler(submitGuestbookEntry));
 eventRouter.post("/public/events/:slug/gifts/initialize", asyncHandler(initializeGift));

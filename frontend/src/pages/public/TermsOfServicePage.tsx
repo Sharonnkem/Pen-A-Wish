@@ -31,7 +31,7 @@ const sections = [
   },
   {
     body: [
-      "The service may evolve over time, but Version 1 remains limited to the features described in the Pen A Wish project scope.",
+      "The service may evolve over time, but it will remain centered on the celebration, wallet, and sharing features described in Pen A Wish.",
       "If you have questions about these terms, use the Contact page to reach out."
     ],
     title: "Changes and support"

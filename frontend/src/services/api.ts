@@ -22,6 +22,8 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
 };
 
+let refreshSessionPromise: Promise<AuthResponse["data"] | null> | null = null;
+
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, ...requestInit } = options;
   const headers = new Headers(options.headers);
@@ -94,21 +96,33 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 }
 
 async function refreshSession(): Promise<AuthResponse["data"] | null> {
-  const response = await fetch(`${appConfig.apiBaseUrl}/auth/refresh-token`, {
-    credentials: "include",
-    method: "POST"
-  });
-
-  const payload = (await response.json().catch(() => null)) as AuthResponse | null;
-
-  if (!response.ok || !payload?.data) {
-    return null;
+  if (refreshSessionPromise) {
+    return refreshSessionPromise;
   }
 
-  setAccessToken(payload.data.accessToken);
-  setStoredUser(payload.data.user);
+  refreshSessionPromise = (async () => {
+    const response = await fetch(`${appConfig.apiBaseUrl}/auth/refresh-token`, {
+      credentials: "include",
+      method: "POST"
+    });
 
-  return payload.data;
+    const payload = (await response.json().catch(() => null)) as AuthResponse | null;
+
+    if (!response.ok || !payload?.data) {
+      return null;
+    }
+
+    setAccessToken(payload.data.accessToken);
+    setStoredUser(payload.data.user);
+
+    return payload.data;
+  })();
+
+  try {
+    return await refreshSessionPromise;
+  } finally {
+    refreshSessionPromise = null;
+  }
 }
 
 export const apiClient = {

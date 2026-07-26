@@ -4,6 +4,8 @@ import { publicEventService } from "../services/public-event.service.js";
 import { successResponse } from "../utils/api-response.js";
 import { getClientIpHash } from "../utils/client-signals.js";
 import { getRequiredRouteParam } from "../utils/route-param.js";
+import { buildStatusShareSvg } from "../utils/status-share-svg.js";
+import { renderSvgToPngBuffer } from "../utils/render-svg.js";
 import {
   publicReactionSchema,
   publicWishSchema
@@ -66,4 +68,22 @@ export async function getEventReactions(request: Request, response: Response) {
   const counts = await publicEventService.getEventReactionCounts(slug);
 
   response.json(successResponse("Reactions fetched successfully", { counts }));
+}
+
+export async function getEventShareImage(request: Request, response: Response) {
+  const slug = getRequiredRouteParam(request.params.slug, "slug");
+  const event = await publicEventService.getShareImageData(slug);
+  const publicUrl = `${request.protocol}://${request.get("host")}/events/${event.slug}`;
+  const svg = buildStatusShareSvg({
+    celebrantName: event.celebrantName,
+    coverImageUrl: event.coverImageUrl,
+    eventType: event.eventType,
+    publicUrl,
+    profileImageUrl: event.profileImageUrl,
+    title: event.title
+  });
+
+  response.setHeader("Cache-Control", "public, max-age=1800");
+  response.type("image/png");
+  response.send(await renderSvgToPngBuffer(svg));
 }

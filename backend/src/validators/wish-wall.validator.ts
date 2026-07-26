@@ -45,6 +45,7 @@ export const wishWallSettingsSchema = z.object({
   background: backgroundSchema,
   cardStyle: cardSchema,
   export: exportSchema,
+  featuredWishIds: z.array(z.string()).default([]),
   layout: layoutSchema,
   themePreset: z.enum(["paper", "sunset", "garden", "midnight"]),
   typography: typographySchema

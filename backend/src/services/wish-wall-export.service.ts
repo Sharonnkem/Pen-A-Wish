@@ -15,8 +15,10 @@ type WishWallExportPayload = {
   source: WishWallExportSource;
   event: {
     celebrantName: string;
+    coverImageUrl: string | null;
     eventDate: string;
     eventType: string;
+    profileImageUrl: string | null;
     title: string;
   };
   settings?: Awaited<ReturnType<typeof wishWallService.getSettings>>;
@@ -60,8 +62,10 @@ export const wishWallExportService = {
     const event = await eventService.getEventForOwner(eventId, user);
     const baseEvent = {
       celebrantName: event.celebrantName,
+      coverImageUrl: event.coverImageUrl,
       eventDate: event.eventDate,
       eventType: event.eventType,
+      profileImageUrl: event.profileImageUrl,
       title: event.title
     };
     let payload: WishWallExportPayload;

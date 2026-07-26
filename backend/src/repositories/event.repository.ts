@@ -276,13 +276,14 @@ export async function getMyEvents(userId: string) {
       ${hasShowPublicRecentGuestbook ? "e.show_public_recent_guestbook" : "FALSE AS show_public_recent_guestbook"},
       e.created_at,
       e.updated_at,
-      COUNT(DISTINCT w.id)::text AS wishes_count,
-      COUNT(DISTINCT CASE WHEN g.status = 'success' THEN g.id END)::text AS gifts_count
+      (SELECT COUNT(*)::text
+       FROM wishes w
+       WHERE w.event_id = e.id) AS wishes_count,
+      (SELECT COUNT(*)::text
+       FROM gifts g
+       WHERE g.event_id = e.id AND g.status = 'success') AS gifts_count
      FROM events e
-     LEFT JOIN wishes w ON w.event_id = e.id
-     LEFT JOIN gifts g ON g.event_id = e.id
      WHERE e.user_id = $1
-     GROUP BY e.id
      ORDER BY e.created_at DESC;`,
     [userId]
   );

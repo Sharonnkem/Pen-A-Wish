@@ -12,8 +12,10 @@ import {
 import {
   createUser,
   createWalletForUser,
+  deleteUserById,
   findUserByEmail,
   findUserById,
+  updateUserProfile,
   updateUserPassword
 } from "../repositories/user.repository.js";
 import type { AuthUser } from "../types/auth.js";
@@ -28,12 +30,14 @@ import {
 import { emailService } from "./email.service.js";
 
 function toAuthUser(user: {
+  avatar_url?: string | null;
   email: string;
   id: string;
   name: string;
   role: "user" | "admin";
 }): AuthUser {
   return {
+    avatarUrl: user.avatar_url ?? null,
     email: user.email,
     id: user.id,
     name: user.name,
@@ -105,7 +109,7 @@ export const authService = {
       throw new AppError("Invalid email or password", 401);
     }
 
-    return withTransaction(async (client) => {
+    const result = await withTransaction(async (client) => {
       const refreshToken = await issueRefreshToken(user.id, client);
       const authUser = toAuthUser(user);
 
@@ -114,6 +118,65 @@ export const authService = {
         refreshToken,
         user: authUser
       };
+    });
+
+    void safeAsync(() =>
+      emailService.sendLoginAlertEmail({
+        email: user.email,
+        name: user.name
+      })
+    );
+
+    return result;
+  },
+
+  async updateProfile(
+    user: AuthUser,
+    input: {
+      avatarUrl?: string | null;
+      email: string;
+      name: string;
+    }
+  ) {
+    const existingUser = await findUserByEmail(input.email);
+
+    if (existingUser && existingUser.id !== user.id) {
+      throw new AppError("An account with that email already exists", 409);
+    }
+
+    const updatedUser = await withTransaction(async (client) => {
+      const record = await updateUserProfile(
+        user.id,
+        {
+          avatarUrl: input.avatarUrl ?? null,
+          email: input.email,
+          name: input.name
+        },
+        client
+      );
+
+      if (!record) {
+        throw new AppError("Account not found", 404);
+      }
+
+      return record;
+    });
+
+    const authUser = toAuthUser(updatedUser);
+
+    return {
+      accessToken: createAccessToken(authUser),
+      user: authUser
+    };
+  },
+
+  async deleteAccount(user: AuthUser) {
+    await withTransaction(async (client) => {
+      await client.query(`DELETE FROM admin_logs WHERE admin_id = $1;`, [user.id]);
+      await client.query(`UPDATE withdrawal_requests SET reviewed_by = NULL WHERE reviewed_by = $1;`, [
+        user.id
+      ]);
+      await deleteUserById(user.id, client);
     });
   },
 

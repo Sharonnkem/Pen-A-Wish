@@ -32,7 +32,7 @@ const sections = [
   {
     body: [
       "If you need support regarding your data, reach out through the Contact page so we can review the request carefully.",
-      "This policy can be updated as the product grows, but Version 1 remains focused on the celebration and wallet features described in the project documents."
+      "This policy may be updated as Pen A Wish grows, but it will stay focused on the celebration and wallet features described here."
     ],
     title: "Questions and updates"
   }

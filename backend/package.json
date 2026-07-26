@@ -4,9 +4,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/install-playwright.cjs",
     "dev": "tsx watch src/server.ts",
     "postinstall": "node scripts/install-playwright.cjs",
     "build": "tsc -p tsconfig.json",
+    "prestart": "node scripts/install-playwright.cjs",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "db:check": "tsx src/scripts/check-db.ts",

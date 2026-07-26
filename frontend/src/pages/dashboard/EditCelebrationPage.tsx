@@ -28,6 +28,7 @@ export function EditCelebrationPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["my-events"] });
       await queryClient.invalidateQueries({ queryKey: ["event", id] });
+      navigate(`/celebrations/${id}`);
     }
   });
 

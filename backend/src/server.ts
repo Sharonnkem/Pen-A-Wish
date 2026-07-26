@@ -3,12 +3,15 @@ import { connectToDatabase } from "./config/db.js";
 import { env } from "./config/env.js";
 
 async function bootstrap() {
-  await connectToDatabase();
-
   const app = createApp();
 
   app.listen(env.port, () => {
     console.log(`Pen A Wish backend listening on http://localhost:${env.port}`);
+  });
+
+  connectToDatabase().catch((error) => {
+    console.error("Database connection check failed.");
+    console.error(error);
   });
 }
 

@@ -10,14 +10,16 @@ export async function getDashboardOverview(userId: string): Promise<DashboardOve
       wishes_received_count: string;
     }>(
       `SELECT
-        COUNT(DISTINCT e.id)::text AS celebrations_count,
-        COUNT(DISTINCT CASE WHEN e.is_public = TRUE THEN e.id END)::text AS public_links_count,
-        COUNT(DISTINCT w.id)::text AS wishes_received_count,
-        COUNT(DISTINCT CASE WHEN g.status = 'success' THEN g.id END)::text AS gifts_received_count
-       FROM events e
-       LEFT JOIN wishes w ON w.event_id = e.id
-       LEFT JOIN gifts g ON g.event_id = e.id
-       WHERE e.user_id = $1;`,
+        (SELECT COUNT(*)::text FROM events e WHERE e.user_id = $1) AS celebrations_count,
+        (SELECT COUNT(*)::text FROM events e WHERE e.user_id = $1 AND e.is_public = TRUE) AS public_links_count,
+        (SELECT COUNT(*)::text
+         FROM wishes w
+         INNER JOIN events e ON e.id = w.event_id
+         WHERE e.user_id = $1) AS wishes_received_count,
+        (SELECT COUNT(*)::text
+         FROM gifts g
+         INNER JOIN events e ON e.id = g.event_id
+         WHERE e.user_id = $1 AND g.status = 'success') AS gifts_received_count;`,
       [userId]
     ),
     query<{

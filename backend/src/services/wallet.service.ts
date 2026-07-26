@@ -14,6 +14,8 @@ import {
   listAdminWithdrawalRequests,
   updateWithdrawalRequest
 } from "../repositories/wallet.repository.js";
+import { emailService } from "./email.service.js";
+import { safeAsync } from "../utils/safe-async.js";
 
 function nairaToKobo(amountNaira: number) {
   return Math.round(amountNaira * 100);
@@ -114,6 +116,18 @@ export const walletService = {
           withdrawalRequestId: withdrawal.id
         },
         client
+      );
+
+      await safeAsync(() =>
+        emailService.sendWithdrawalAlertEmail({
+          accountName: input.accountName,
+          accountNumber: input.accountNumber,
+          amountKobo,
+          bankName: input.bankName,
+          email: user.email,
+          name: user.name,
+          requestId: withdrawal.id
+        })
       );
 
       return {

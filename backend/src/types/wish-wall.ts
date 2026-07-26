@@ -46,6 +46,7 @@ export type WishWallSettings = {
   background: WishWallBackgroundSettings;
   cardStyle: WishWallCardSettings;
   export: WishWallExportSettings;
+  featuredWishIds: string[];
   layout: WishWallLayoutSettings;
   themePreset: WishWallThemePreset;
   typography: WishWallTypographySettings;

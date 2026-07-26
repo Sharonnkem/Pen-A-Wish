@@ -66,100 +66,40 @@ export function PublicWishWallPage() {
     );
   }
 
-  const { event, stats, wishes } = wallQuery.data.data;
+  const { event, wishes } = wallQuery.data.data;
 
   return (
     <PageTransition>
       <main className="min-h-screen overflow-hidden bg-paper px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-[84rem] space-y-6">
-          <header className="rounded-[34px] border border-white/70 bg-white/82 px-5 py-4 shadow-card sm:px-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-plum-700">
-                  Public Wish Wall
-                </p>
-                <h1 className="mt-3 font-display text-4xl leading-tight text-charcoal-900 sm:text-[3.1rem]">
-                  {event.title}
-                </h1>
-                <p className="mt-3 max-w-3xl text-sm leading-7 text-charcoal-900/72 sm:text-base">
-                  A scrapbook-style wall of public wishes for {event.celebrantName}.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Link to={`/events/${event.slug}`}>
-                  <Button variant="secondary">Back to event page</Button>
-                </Link>
-                <Link to="/register">
-                  <Button>Create your own page</Button>
-                </Link>
-              </div>
-            </div>
-          </header>
-
-          <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
-            <div className="rounded-[34px] border border-white/70 bg-plum-800 p-6 text-white shadow-card">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-blush-100">
-                Wish Wall story
-              </p>
-              <h2 className="mt-3 font-display text-3xl leading-tight">
-                The heart of Pen A Wish, gathered into one keepsake wall.
-              </h2>
-              <p className="mt-4 text-sm leading-7 text-white/78">
-                Public wishes appear here as layered paper moments instead of a plain list, keeping the celebration visual, warm, and memorable across desktop and mobile web.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
-                <p className="text-xs uppercase tracking-[0.22em] text-plum-700">Wishes</p>
-                <p className="mt-3 font-display text-4xl text-plum-800">{stats.wishesCount}</p>
-              </div>
-              <div className="rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
-                <p className="text-xs uppercase tracking-[0.22em] text-plum-700">Memories</p>
-                <p className="mt-3 font-display text-4xl text-plum-800">{stats.guestbookCount}</p>
-              </div>
-              <div className="rounded-[30px] border border-white/70 bg-white/84 p-5 shadow-card">
-                <p className="text-xs uppercase tracking-[0.22em] text-plum-700">Gifts</p>
-                <p className="mt-3 font-display text-4xl text-plum-800">{stats.giftsCount}</p>
-              </div>
-            </div>
-          </section>
-
           {!wishes.length ? (
-            <EmptyState
-              title="No public wishes yet"
-              description="When guests begin leaving wishes, they will appear here in the full public Wish Wall."
-            />
+            <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center">
+              <EmptyState
+                title="Waiting for the first wish"
+                description="This Wish Wall is ready. When the first wish arrives, it will appear here."
+              />
+            </div>
           ) : (
             <section className="relative overflow-hidden rounded-[36px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,250,244,0.92)_0%,rgba(248,238,228,0.9)_100%)] p-4 shadow-card sm:p-6">
-              <div className="pointer-events-none absolute left-6 top-6 h-20 w-20 rounded-full bg-blush-100/70 blur-2xl" />
-              <div className="pointer-events-none absolute bottom-10 right-10 h-24 w-24 rounded-full bg-gold-400/15 blur-3xl" />
-              <div className="pointer-events-none absolute right-6 top-8 h-10 w-28 rotate-6 rounded-full border border-white/60 bg-white/45" />
-              <div className="pointer-events-none absolute bottom-8 left-8 h-10 w-24 -rotate-12 rounded-full border border-white/50 bg-cream-100/55" />
-
-              <div className="relative mb-6 rounded-[28px] border border-white/70 bg-white/76 px-5 py-5 shadow-[0_18px_40px_rgba(67,34,53,0.08)]">
-                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-plum-700">
-                      Pen A Wish
-                    </p>
-                    <h2 className="mt-3 font-display text-4xl text-charcoal-900">
-                      {event.title}
-                    </h2>
-                    <p className="mt-3 text-sm leading-7 text-charcoal-900/68">
-                      Wishes collected for {event.celebrantName} on {new Date(event.eventDate).toLocaleDateString()}.
-                    </p>
-                  </div>
-                  <div className="grid gap-2 text-sm text-charcoal-900/68 md:text-right">
-                    <p>
-                      <span className="font-semibold text-charcoal-900">Event type:</span>{" "}
-                      {event.eventType}
-                    </p>
-                    <p>
-                      <span className="font-semibold text-charcoal-900">Wall mood:</span>{" "}
-                      Scrapbook collage
-                    </p>
-                  </div>
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-white/70 bg-white/76 px-5 py-5 shadow-[0_18px_40px_rgba(67,34,53,0.08)]">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-plum-700">
+                    Public Wish Wall
+                  </p>
+                  <h2 className="mt-3 font-display text-4xl text-charcoal-900">
+                    {event.title}
+                  </h2>
+                  <p className="mt-3 text-sm leading-7 text-charcoal-900/68">
+                    Wishes collected for {event.celebrantName} on {new Date(event.eventDate).toLocaleDateString()}.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Link to={`/events/${event.slug}`}>
+                    <Button variant="secondary">Back to event page</Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button>Create your own page</Button>
+                  </Link>
                 </div>
               </div>
 

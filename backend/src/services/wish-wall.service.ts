@@ -29,6 +29,7 @@ export const defaultWishWallSettings: WishWallSettings = {
     showReactions: true,
     showStats: true
   },
+  featuredWishIds: [],
   layout: {
     columns: 3,
     mode: "collageScrapbook"
@@ -46,6 +47,13 @@ function normalizeSettings(settings: WishWallSettings): WishWallSettings {
     background: {
       ...settings.background,
       imageUrl: settings.background.imageUrl?.trim() || null
+    },
+    featuredWishIds: Array.isArray(settings.featuredWishIds)
+      ? settings.featuredWishIds.filter((wishId) => typeof wishId === "string" && wishId.trim().length > 0)
+      : [],
+    layout: {
+      ...settings.layout,
+      mode: "collageScrapbook"
     }
   };
 }
@@ -64,7 +72,36 @@ user: AuthUser) {
 }
 
 function mapSettings(record: WishWallSettingsRecord | null): WishWallSettings {
-  return record?.settings ?? defaultWishWallSettings;
+  if (!record?.settings) {
+    return defaultWishWallSettings;
+  }
+
+  return {
+    ...defaultWishWallSettings,
+    ...record.settings,
+    background: {
+      ...defaultWishWallSettings.background,
+      ...record.settings.background
+    },
+    cardStyle: {
+      ...defaultWishWallSettings.cardStyle,
+      ...record.settings.cardStyle
+    },
+    export: {
+      ...defaultWishWallSettings.export,
+      ...record.settings.export
+    },
+    featuredWishIds: record.settings.featuredWishIds ?? defaultWishWallSettings.featuredWishIds,
+    layout: {
+      ...defaultWishWallSettings.layout,
+      ...record.settings.layout,
+      mode: "collageScrapbook"
+    },
+    typography: {
+      ...defaultWishWallSettings.typography,
+      ...record.settings.typography
+    }
+  };
 }
 
 export const wishWallService = {

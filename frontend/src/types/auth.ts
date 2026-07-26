@@ -1,6 +1,7 @@
 export type UserRole = "user" | "admin";
 
 export type AuthUser = {
+  avatarUrl?: string | null;
   email: string;
   id: string;
   name: string;
@@ -15,4 +16,3 @@ export type AuthResponse = {
     user: AuthUser;
   };
 };
-

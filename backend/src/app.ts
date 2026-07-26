@@ -11,6 +11,10 @@ import { healthRouter } from "./routes/health.route.js";
 import { paymentRouter } from "./routes/payment.route.js";
 import { uploadRouter } from "./routes/upload.route.js";
 import { walletRouter } from "./routes/wallet.route.js";
+import {
+  getCelebrationShareImage,
+  getCelebrationSharePage
+} from "./controllers/share.controller.js";
 import { notFoundHandler } from "./middleware/not-found.middleware.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 
@@ -53,6 +57,9 @@ export function createApp() {
       }
     });
   });
+
+  app.get("/share/events/:slug", getCelebrationSharePage);
+  app.get("/share/events/:slug/image.png", getCelebrationShareImage);
 
   app.use("/api/auth", authRouter);
   app.use("/api", adminRouter);

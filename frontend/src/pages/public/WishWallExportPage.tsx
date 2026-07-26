@@ -10,8 +10,10 @@ type ExportPayload = {
   source: "guestbook" | "wishes";
   event: {
     celebrantName: string;
+    coverImageUrl?: string | null;
     eventDate: string;
     eventType: string;
+    profileImageUrl?: string | null;
     title: string;
   };
   settings?: WishWallSettings;
@@ -67,8 +69,10 @@ export function WishWallExportPage() {
         {payload.source === "guestbook" ? (
           <GuestbookWallPreview
             celebrantName={payload.event.celebrantName}
+            coverImageUrl={payload.event.coverImageUrl ?? null}
             eventDate={payload.event.eventDate}
             eventTitle={payload.event.title}
+            profileImageUrl={payload.event.profileImageUrl ?? null}
             exportMode
             settings={payload.settings as WishWallSettings}
             entries={payload.guestbookEntries ?? []}
@@ -76,9 +80,11 @@ export function WishWallExportPage() {
         ) : (
           <WishWallPreview
             celebrantName={payload.event.celebrantName}
+            coverImageUrl={payload.event.coverImageUrl ?? null}
             eventDate={payload.event.eventDate}
             eventTitle={payload.event.title}
             eventType={payload.event.eventType}
+            profileImageUrl={payload.event.profileImageUrl ?? null}
             exportMode
             settings={payload.settings as WishWallSettings}
             wishes={payload.wishes ?? []}
