@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { PublicWishPreview } from "../../types/event";
 import type { WishWallSettings } from "../../types/wish-wall";
@@ -148,17 +148,6 @@ function getLayoutRotation(mode: WishWallSettings["layout"]["mode"], index: numb
   return getRotation(index);
 }
 
-const scrapbookClipPaths = [
-  "polygon(2% 1%, 96% 0%, 100% 9%, 98% 92%, 94% 100%, 6% 98%, 0 90%, 1% 9%)",
-  "polygon(1% 3%, 97% 1%, 100% 12%, 99% 94%, 92% 100%, 6% 99%, 0 90%, 0 10%)",
-  "polygon(3% 0, 96% 2%, 100% 10%, 97% 96%, 90% 100%, 4% 98%, 0 92%, 2% 8%)",
-  "polygon(0 4%, 95% 0, 100% 8%, 98% 94%, 95% 100%, 7% 97%, 0 91%, 1% 10%)",
-  "polygon(2% 2%, 98% 0, 100% 12%, 96% 96%, 88% 100%, 5% 98%, 0 88%, 1% 10%)"
-] as const;
-
-function getScrapbookClipPath(index: number) {
-  return scrapbookClipPaths[index % scrapbookClipPaths.length];
-}
 
 function hexToRgba(hex: string, alpha: number) {
   const normalized = hex.replace("#", "");
@@ -231,21 +220,6 @@ function computeCollageCanvasHeightPx(
   const extraMicro = Math.max(0, microCount - LAYER_DESIGN_CAPACITY.micro) * LAYER_GROWTH_BUDGET_PX.micro;
 
   return baseHeightPx + extraStandard + extraMini + extraMicro;
-}
-
-const LAYER_TEXT_LIMITS: Record<CollageLayer, { message: number; sender: number }> = {
-  featured: { message: 220, sender: 30 },
-  standard: { message: 140, sender: 26 },
-  mini: { message: 90, sender: 22 },
-  micro: { message: 60, sender: 18 }
-};
-
-function truncateText(text: string, maxChars: number) {
-  if (text.length <= maxChars) {
-    return text;
-  }
-
-  return `${text.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
 }
 
 function getCollagePositions(layer: CollageLayer): CollageSlotPoint[] {
@@ -358,9 +332,6 @@ function getCollagePositions(layer: CollageLayer): CollageSlotPoint[] {
   }
 }
 
-function toFloat(value: string) {
-  return Number.parseFloat(value);
-}
 
 function clampNumber(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
@@ -500,7 +471,6 @@ function buildCollisionSafeCollagePlacements(
   const collisionPadding = exportMode ? 10 : 6;
 
   return wishes.map((wish, index) => {
-    const slotWidthRem = getCollagePositions(layer)[index % getCollagePositions(layer).length].width;
     const contentWidthRem = Number.parseFloat(getCollageCardWidth(wish, layer, exportMode));
     const baseWidthRem = contentWidthRem;
     const baseHeightPx = estimateCollageHeight(wish, layer, baseWidthRem);
@@ -590,21 +560,6 @@ function getCollageCardWidth(
   }
 }
 
-function clampCollageWidth(width: string, maxWidth?: string) {
-  if (!maxWidth) {
-    return width;
-  }
-
-  const widthValue = Number.parseFloat(width);
-  const maxValue = Number.parseFloat(maxWidth);
-
-  if (Number.isNaN(widthValue) || Number.isNaN(maxValue)) {
-    return width;
-  }
-
-  return `${Math.min(widthValue, Math.max(0, maxValue - 0.2))}rem`;
-}
-
 function PosterScrapNote({
   exportMode,
   prominence = "mini",
@@ -629,7 +584,6 @@ function PosterScrapNote({
   const featured = prominence === "featured";
   const standard = prominence === "standard";
   const mini = prominence === "mini";
-  const micro = prominence === "micro";
 
   const sizeClasses = exportMode
     ? featured
@@ -711,7 +665,7 @@ function PosterScrapNote({
           type="button"
           onClick={() => onRemoveWish(wish.id)}
         >
-          ×
+          �
         </button>
       ) : null}
 
@@ -932,7 +886,7 @@ function WishCard({
           type="button"
           onClick={() => onRemoveWish(wish.id)}
         >
-          <span className="text-lg leading-none">×</span>
+          <span className="text-lg leading-none">�</span>
         </button>
       ) : null}
 
@@ -1005,9 +959,6 @@ export function WishWallPreview({
   wishes
 }: WishWallPreviewProps) {
   const [timelinePage, setTimelinePage] = useState(0);
-  const timelineCanvasRef = useRef<HTMLDivElement | null>(null);
-  const [timelineCanvasScale, setTimelineCanvasScale] = useState(1);
-  const [timelineCanvasHeight, setTimelineCanvasHeight] = useState<number | null>(null);
   const [collagePage, setCollagePage] = useState(0);
   const [buntingPage, setBuntingPage] = useState(0);
   const [journalPage, setJournalPage] = useState(0);
@@ -1017,7 +968,6 @@ export function WishWallPreview({
   const cardTone = styleClasses[settings.cardStyle.style];
   const wallStyle = settings.layout.mode;
   const posterWallStyle = "collageScrapbook" as const;
-  const posterWishes = wishes;
   const hasBackgroundImage = settings.background.mode === "image" && settings.background.imageUrl;
   const backgroundStyle =
     settings.background.mode === "solid"
@@ -1157,34 +1107,6 @@ export function WishWallPreview({
       setTimelinePage(Math.max(0, totalTimelinePages - 1));
     }
   }, [timelinePage, totalTimelinePages]);
-
-  useEffect(() => {
-    if (wallStyle !== "letterTimeline" || exportMode || typeof window === "undefined") {
-      setTimelineCanvasScale(1);
-      setTimelineCanvasHeight(null);
-      return;
-    }
-
-    const baseWidth = 760;
-
-    const updateTimelineCanvas = () => {
-      const availableWidth = Math.max(0, window.innerWidth - 32);
-      const nextScale = Math.min(availableWidth / baseWidth, 1);
-
-      setTimelineCanvasScale(nextScale);
-
-      if (timelineCanvasRef.current) {
-        setTimelineCanvasHeight(timelineCanvasRef.current.scrollHeight * nextScale);
-      }
-    };
-
-    updateTimelineCanvas();
-    window.addEventListener("resize", updateTimelineCanvas);
-
-    return () => {
-      window.removeEventListener("resize", updateTimelineCanvas);
-    };
-  }, [exportMode, timelineWishes.length, wallStyle]);
 
   useEffect(() => {
     if (buntingPage > totalBuntingPages - 1) {
@@ -1425,14 +1347,14 @@ export function WishWallPreview({
                     A keepsake of love and wishes.
                   </p>
                   <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#edd8bc] bg-white/88 px-3.5 py-1.5 text-[0.78rem] text-plum-800 shadow-[0_10px_24px_rgba(67,34,53,0.08)]">
-                    <span className="text-lg leading-none">♥</span>
+                    <span className="text-lg leading-none">?</span>
                     <span className="font-semibold">{wishes.length} Wishes</span>
                   </div>
                 </div>
 
                 <div className="absolute left-[13%] top-[10%] text-[0.9rem] leading-5 text-[#d84e92]" style={{ fontFamily: fontFamilies.handwritten }}>
                   Keep being you
-                  <span className="ml-1 text-lg">♡</span>
+                  <span className="ml-1 text-lg">?</span>
                 </div>
 
                 {microWishes.length ? (
@@ -1549,23 +1471,23 @@ export function WishWallPreview({
                   </div>
                 )}
 
-                <div className="pointer-events-none absolute left-[3%] top-[10%] text-2xl text-[#f2c66a]">✦</div>
-                <div className="pointer-events-none absolute right-[4%] top-[14%] text-3xl text-[#c58de6]">♡</div>
-                <div className="pointer-events-none absolute left-[10%] bottom-[18%] text-3xl text-[#ef8ab0]">☆</div>
-                <div className="pointer-events-none absolute right-[14%] bottom-[8%] text-3xl text-[#75b6f5]">✧</div>
-                <div className="pointer-events-none absolute left-[78%] top-[50%] text-4xl text-[#f39ac1]">◯</div>
+                <div className="pointer-events-none absolute left-[3%] top-[10%] text-2xl text-[#f2c66a]">?</div>
+                <div className="pointer-events-none absolute right-[4%] top-[14%] text-3xl text-[#c58de6]">?</div>
+                <div className="pointer-events-none absolute left-[10%] bottom-[18%] text-3xl text-[#ef8ab0]">?</div>
+                <div className="pointer-events-none absolute right-[14%] bottom-[8%] text-3xl text-[#75b6f5]">?</div>
+                <div className="pointer-events-none absolute left-[78%] top-[50%] text-4xl text-[#f39ac1]">?</div>
 
-                <div className="pointer-events-none absolute left-[22%] top-[22%] text-3xl text-[#f2c66a]">✦</div>
-                <div className="pointer-events-none absolute right-[18%] top-[20%] text-4xl text-[#c58de6]">♡</div>
-                <div className="pointer-events-none absolute left-[8%] bottom-[24%] text-4xl text-[#ef8ab0]">☆</div>
-                <div className="pointer-events-none absolute right-[10%] bottom-[10%] text-4xl text-[#75b6f5]">✧</div>
-                <div className="pointer-events-none absolute left-[64%] top-[58%] text-5xl text-[#f39ac1]">◯</div>
-                <div className="pointer-events-none absolute left-[31%] top-[14%] text-2xl text-[#f39ac1]">❀</div>
-                <div className="pointer-events-none absolute right-[31%] top-[15%] text-2xl text-[#f2c66a]">✿</div>
-                <div className="pointer-events-none absolute left-[17%] bottom-[14%] text-3xl text-[#c58de6]">✦</div>
-                <div className="pointer-events-none absolute right-[24%] bottom-[15%] text-3xl text-[#ef8ab0]">♡</div>
-                <div className="pointer-events-none absolute left-[50%] top-[81%] text-2xl text-[#75b6f5]">✧</div>
-                <div className="pointer-events-none absolute right-[8%] top-[38%] text-2xl text-[#f2c66a]">★</div>
+                <div className="pointer-events-none absolute left-[22%] top-[22%] text-3xl text-[#f2c66a]">?</div>
+                <div className="pointer-events-none absolute right-[18%] top-[20%] text-4xl text-[#c58de6]">?</div>
+                <div className="pointer-events-none absolute left-[8%] bottom-[24%] text-4xl text-[#ef8ab0]">?</div>
+                <div className="pointer-events-none absolute right-[10%] bottom-[10%] text-4xl text-[#75b6f5]">?</div>
+                <div className="pointer-events-none absolute left-[64%] top-[58%] text-5xl text-[#f39ac1]">?</div>
+                <div className="pointer-events-none absolute left-[31%] top-[14%] text-2xl text-[#f39ac1]">?</div>
+                <div className="pointer-events-none absolute right-[31%] top-[15%] text-2xl text-[#f2c66a]">?</div>
+                <div className="pointer-events-none absolute left-[17%] bottom-[14%] text-3xl text-[#c58de6]">?</div>
+                <div className="pointer-events-none absolute right-[24%] bottom-[15%] text-3xl text-[#ef8ab0]">?</div>
+                <div className="pointer-events-none absolute left-[50%] top-[81%] text-2xl text-[#75b6f5]">?</div>
+                <div className="pointer-events-none absolute right-[8%] top-[38%] text-2xl text-[#f2c66a]">?</div>
 
                 {!exportMode && totalCollagePages > 1 ? (
                   <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center justify-center gap-3 rounded-full border border-[#ead9c2] bg-white/86 px-4 py-2 shadow-[0_8px_18px_rgba(67,34,53,0.06)] backdrop-blur-sm">
@@ -1666,7 +1588,7 @@ export function WishWallPreview({
                 </div>
               ) : null}
               <div className="pointer-events-none absolute bottom-0 left-1/2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full bg-[#4b4a49] shadow-[0_16px_30px_rgba(37,35,34,0.32)]">
-                <span className="text-lg leading-none text-white">↓</span>
+                <span className="text-lg leading-none text-white">?</span>
               </div>
             </div>
           ) : wallStyle === "buntingGarland" ? (
@@ -1755,3 +1677,4 @@ export function WishWallPreview({
     </section>
   );
 } 
+
