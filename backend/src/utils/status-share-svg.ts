@@ -114,18 +114,6 @@ export function buildStatusShareSvg(input: StatusShareSvgInput) {
     )
     .join("");
 
-  const photoMarkup = photoUrl
-    ? `
-      <clipPath id="profileClip">
-        <circle cx="566" cy="628" r="154" />
-      </clipPath>
-      <image href="${photoUrl}" x="412" y="474" width="308" height="308" clip-path="url(#profileClip)" preserveAspectRatio="xMidYMid slice" />
-    `
-    : `
-      <circle cx="566" cy="628" r="154" fill="#f1d9bf" />
-      <text x="566" y="652" text-anchor="middle" font-family="Georgia, serif" font-size="72" fill="#5f324a">${initials}</text>
-    `;
-
   const ribbonWidth = Math.min(500, Math.max(320, 20 * title.length));
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -153,13 +141,15 @@ export function buildStatusShareSvg(input: StatusShareSvgInput) {
           <feMergeNode in="SourceGraphic" />
         </feMerge>
       </filter>
-      <clipPath id="photoRingClip">
-        <circle cx="566" cy="628" r="186" />
+      <clipPath id="fullBgClip">
+        <rect x="40" y="40" width="1052" height="1520" rx="48" />
       </clipPath>
     </defs>
 
     <rect width="1132" height="1600" fill="url(#bg)" />
-    <rect x="40" y="40" width="1052" height="1520" rx="48" fill="url(#card)" filter="url(#shadow)" />
+    ${photoUrl ? `<image href="${photoUrl}" x="40" y="40" width="1052" height="1520" preserveAspectRatio="xMidYMid slice" clip-path="url(#fullBgClip)" opacity="0.9" />` : ""}
+    <rect x="40" y="40" width="1052" height="1520" rx="48" fill="#fff6ee" opacity="${photoUrl ? "0.68" : "0.96"}" />
+    <rect x="40" y="40" width="1052" height="1520" rx="48" fill="url(#card)" opacity="0.42" filter="url(#shadow)" />
     <g opacity="0.95">${renderConfetti()}</g>
 
     <text x="566" y="238" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="26" letter-spacing="8" fill="#5a4960">YOU&apos;RE INVITED TO</text>
@@ -167,12 +157,9 @@ export function buildStatusShareSvg(input: StatusShareSvgInput) {
     <text x="566" y="424" text-anchor="middle" font-family="Georgia, serif" font-size="96" font-style="italic" fill="#f0b84f">Spread Joy.</text>
 
     <circle cx="566" cy="628" r="186" fill="#fffdf8" stroke="#f0d7a3" stroke-width="6" filter="url(#softGlow)" />
-    ${photoMarkup}
-    <circle cx="566" cy="628" r="156" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.8" />
-    <path d="M 390 612 C 370 606, 364 596, 360 579" stroke="#5f3a76" stroke-width="8" stroke-linecap="round" />
-    <path d="M 392 652 C 374 658, 366 670, 360 685" stroke="#f0b84f" stroke-width="8" stroke-linecap="round" />
-    <path d="M 740 612 C 760 606, 768 596, 772 579" stroke="#5f3a76" stroke-width="8" stroke-linecap="round" />
-    <path d="M 738 652 C 756 658, 764 670, 770 685" stroke="#f0b84f" stroke-width="8" stroke-linecap="round" />
+    <circle cx="566" cy="628" r="154" fill="#ffffff" fill-opacity="0.36" stroke="#ffffff" stroke-width="8" opacity="0.95" />
+    <circle cx="566" cy="628" r="128" fill="#fff8f0" fill-opacity="0.72" stroke="#f0d7a3" stroke-width="4" />
+    <text x="566" y="652" text-anchor="middle" font-family="Georgia, serif" font-size="72" fill="#5f324a">${initials}</text>
 
     <path d="M 390 815 C 440 760, 692 760, 742 815 L 742 853 C 692 898, 440 898, 390 853 Z" fill="url(#ribbon)" />
     <path d="M 390 815 L 364 836 L 390 853" fill="#4f2e63" />
