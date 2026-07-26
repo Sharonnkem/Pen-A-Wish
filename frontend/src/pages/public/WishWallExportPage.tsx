@@ -69,10 +69,8 @@ export function WishWallExportPage() {
         {payload.source === "guestbook" ? (
           <GuestbookWallPreview
             celebrantName={payload.event.celebrantName}
-            coverImageUrl={payload.event.coverImageUrl ?? null}
             eventDate={payload.event.eventDate}
             eventTitle={payload.event.title}
-            profileImageUrl={payload.event.profileImageUrl ?? null}
             exportMode
             settings={payload.settings as WishWallSettings}
             entries={payload.guestbookEntries ?? []}

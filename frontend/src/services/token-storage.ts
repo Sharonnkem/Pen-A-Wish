@@ -10,11 +10,11 @@ function decodeBase64Url(value: string) {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
 
-  if (typeof window === "undefined") {
-    return Buffer.from(padded, "base64").toString("utf8");
+  if (typeof atob === "function") {
+    return atob(padded);
   }
 
-  return window.atob(padded);
+  return "";
 }
 
 export function getAccessTokenExpiryMs(token: string | null) {

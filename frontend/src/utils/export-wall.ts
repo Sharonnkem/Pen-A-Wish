@@ -50,6 +50,7 @@ const defaultWishWallExportSettings: WishWallSettings = {
     showReactions: true,
     showStats: true
   },
+  featuredWishIds: [],
   layout: {
     columns: 3,
     mode: "masonry"
