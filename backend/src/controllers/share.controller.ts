@@ -27,10 +27,11 @@ export async function getCelebrationSharePage(request: Request, response: Respon
   const pageTitle = `${event.celebrantName} | Pen A Wish`;
   const description = `Leave a wish for ${event.celebrantName}'s ${event.title}.`;
   const shareImageUrl = getSharePreviewUrl(request, event.slug);
+  const previewImageUrl = event.profileImageUrl ?? event.coverImageUrl ?? shareImageUrl;
   const redirectUrl = `${env.frontendUrl.replace(/\/$/, "")}/events/${event.slug}`;
   const escapedTitle = escapeHtml(pageTitle);
   const escapedDescription = escapeHtml(description);
-  const escapedImage = escapeHtml(shareImageUrl);
+  const escapedImage = escapeHtml(previewImageUrl);
   const escapedRedirect = escapeHtml(redirectUrl);
 
   response.type("html").send(`<!doctype html>

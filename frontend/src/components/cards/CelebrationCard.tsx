@@ -9,7 +9,6 @@ import {
   buildCelebrationShareMessage,
   getCelebrationPreviewImageUrl,
   getCelebrationShareUrl,
-  getCelebrationSharePreviewImageUrl,
   shareCelebrationInvite
 } from "../../utils/share";
 
@@ -60,7 +59,10 @@ export function CelebrationCard({
       celebrantName: event.celebrantName,
       eventType: event.eventType,
       publicUrl: publicShareUrl,
-      sharePreviewImageUrl: getCelebrationSharePreviewImageUrl(event.slug),
+      sharePreviewImageUrl: getCelebrationPreviewImageUrl(
+        event.profileImageUrl,
+        event.coverImageUrl
+      ),
       title: event.title
     });
 

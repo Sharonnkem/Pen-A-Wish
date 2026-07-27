@@ -87,47 +87,10 @@ export function buildCelebrationShareMessage({
   ].join("\n");
 }
 
-function getShareFileName(title: string) {
-  const safe = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48);
-
-  return `${safe || "pen-a-wish"}-status.png`;
-}
-
 export async function shareCelebrationInvite(input: CelebrationShareMediaInput) {
   const shareMessage = buildCelebrationShareMessage(input);
 
   if (typeof navigator !== "undefined" && "share" in navigator) {
-    try {
-      const response = await fetch(input.sharePreviewImageUrl, { cache: "no-store" });
-
-      if (response.ok) {
-        const imageBlob = await response.blob();
-        const shareFile = new File([imageBlob], getShareFileName(input.title), {
-          type: imageBlob.type || "image/png"
-        });
-        const navigatorWithFiles = navigator as Navigator & {
-          canShare?: (data?: ShareData & { files?: File[] }) => boolean;
-          share: (data: ShareData & { files?: File[] }) => Promise<void>;
-        };
-
-        if (!navigatorWithFiles.canShare || navigatorWithFiles.canShare({ files: [shareFile] })) {
-          await navigatorWithFiles.share({
-            files: [shareFile],
-            text: shareMessage,
-            title: input.title,
-            url: input.publicUrl
-          });
-          return true;
-        }
-      }
-    } catch {
-      // Fall back to text-only sharing below.
-    }
-
     try {
       await navigator.share({
         text: shareMessage,

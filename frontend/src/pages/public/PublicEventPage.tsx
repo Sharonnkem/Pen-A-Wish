@@ -17,7 +17,7 @@ import { Modal } from "../../components/modals/Modal";
 import { ApiError } from "../../services/api";
 import { eventService } from "../../services/event.service";
 import { formatNairaFromKobo } from "../../utils/currency";
-import { getCelebrationSharePreviewImageUrl } from "../../utils/share";
+import { getDefaultSharePreviewImageUrl } from "../../utils/share";
 
 const reactionOptions = ["❤️", "🎉", "👏", "🥳"];
 const WISH_MESSAGE_LIMIT = 280;
@@ -145,7 +145,7 @@ export function PublicEventPage() {
     const description =
       event.description ??
       `Leave wishes and memories for ${event.celebrantName}'s ${event.eventType.toLowerCase()} celebration.`;
-    const imageUrl = getCelebrationSharePreviewImageUrl(event.slug);
+    const imageUrl = event.profileImageUrl ?? event.coverImageUrl ?? getDefaultSharePreviewImageUrl();
     const pageUrl =
       typeof window === "undefined" ? `/events/${event.slug}` : window.location.href;
 

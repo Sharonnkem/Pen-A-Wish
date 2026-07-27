@@ -11,8 +11,8 @@ import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { eventService } from "../../services/event.service";
 import { useToast } from "../../components/common/Toast";
 import {
+  getCelebrationPreviewImageUrl,
   getCelebrationShareUrl,
-  getCelebrationSharePreviewImageUrl,
   openShareUrl,
   shareCelebrationInvite
 } from "../../utils/share";
@@ -170,7 +170,10 @@ export function MyCelebrationsPage() {
                             celebrantName: event.celebrantName,
                             eventType: event.eventType,
                             publicUrl: shareUrl,
-                            sharePreviewImageUrl: getCelebrationSharePreviewImageUrl(event.slug),
+                            sharePreviewImageUrl: getCelebrationPreviewImageUrl(
+                              event.profileImageUrl,
+                              event.coverImageUrl
+                            ),
                             title: event.title
                           });
 
@@ -287,11 +290,14 @@ export function MyCelebrationsPage() {
                               size="sm"
                               fullWidth
                             onClick={async () => {
-                                const shared = await shareCelebrationInvite({
+                              const shared = await shareCelebrationInvite({
                                   celebrantName: event.celebrantName,
                                   eventType: event.eventType,
                                   publicUrl: shareUrl,
-                                  sharePreviewImageUrl: getCelebrationSharePreviewImageUrl(event.slug),
+                                  sharePreviewImageUrl: getCelebrationPreviewImageUrl(
+                                    event.profileImageUrl,
+                                    event.coverImageUrl
+                                  ),
                                   title: event.title
                                 });
 
