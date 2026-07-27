@@ -142,7 +142,7 @@ export function CelebrationCard({
           <img
             alt={`${event.title} cover`}
             className="h-44 w-full object-cover"
-            src={event.coverImageUrl ?? event.profileImageUrl ?? getDefaultSharePreviewImageUrl()}
+            src={getCelebrationPreviewImageUrl(event.profileImageUrl, event.coverImageUrl)}
           />
         </div>
       </div>

@@ -980,6 +980,7 @@ export function WishWallPreview({
   const theme = themeAccents[settings.themePreset];
   const headingFont = getTypographyFont(settings.typography.headingFont);
   const bodyFont = getTypographyFont(settings.typography.bodyFont);
+  const isCompact = settings.cardStyle.density === "compact";
   const cardTone = styleClasses[settings.cardStyle.style];
   const wallStyle = settings.layout.mode;
   const posterWallStyle = "collageScrapbook" as const;
