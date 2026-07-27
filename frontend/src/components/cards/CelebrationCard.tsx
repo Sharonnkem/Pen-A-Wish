@@ -68,7 +68,22 @@ export function CelebrationCard({
       return;
     }
 
-    await handleCopyShareLink();
+    try {
+      await navigator.clipboard.writeText(publicShareUrl);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = publicShareUrl;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+
+    showToast({
+      title: "Share link copied",
+      description: "Your celebration link is ready to paste anywhere you like.",
+      tone: "success"
+    });
   }
 
   return (
