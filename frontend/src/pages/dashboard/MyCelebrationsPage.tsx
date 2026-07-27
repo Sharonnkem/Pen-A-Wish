@@ -9,6 +9,7 @@ import { Input } from "../../components/forms/Input";
 import { LoadingState } from "../../components/common/LoadingState";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { eventService } from "../../services/event.service";
+import { useToast } from "../../components/common/Toast";
 import {
   getCelebrationShareUrl,
   getCelebrationSharePreviewImageUrl,
@@ -18,6 +19,7 @@ import {
 
 export function MyCelebrationsPage() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 6;
@@ -176,12 +178,26 @@ export function MyCelebrationsPage() {
                             return;
                           }
 
-                          if (navigator.clipboard?.writeText) {
-                            await navigator.clipboard.writeText(shareUrl);
-                            return;
+                          try {
+                            if (navigator.clipboard?.writeText) {
+                              await navigator.clipboard.writeText(shareUrl);
+                              showToast({
+                                title: "Share link copied",
+                                description: "You can paste the celebration link anywhere you like.",
+                                tone: "success"
+                              });
+                              return;
+                            }
+                          } catch {
+                            // Fall through to opening the share URL.
                           }
 
                           openShareUrl(shareUrl);
+                          showToast({
+                            title: "Share link opened",
+                            description: "Use the browser share sheet or copy the link from there.",
+                            tone: "success"
+                          });
                         }}
                       >
                         Share
@@ -283,12 +299,26 @@ export function MyCelebrationsPage() {
                                   return;
                                 }
 
-                                if (navigator.clipboard?.writeText) {
-                                  await navigator.clipboard.writeText(shareUrl);
-                                  return;
+                                try {
+                                  if (navigator.clipboard?.writeText) {
+                                    await navigator.clipboard.writeText(shareUrl);
+                                    showToast({
+                                      title: "Share link copied",
+                                      description: "You can paste the celebration link anywhere you like.",
+                                      tone: "success"
+                                    });
+                                    return;
+                                  }
+                                } catch {
+                                  // Fall through to opening the share URL.
                                 }
 
                                 openShareUrl(shareUrl);
+                                showToast({
+                                  title: "Share link opened",
+                                  description: "Use the browser share sheet or copy the link from there.",
+                                  tone: "success"
+                                });
                               }}
                             >
                               Share

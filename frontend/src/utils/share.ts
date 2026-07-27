@@ -128,12 +128,16 @@ export async function shareCelebrationInvite(input: CelebrationShareMediaInput) 
       // Fall back to text-only sharing below.
     }
 
-    await navigator.share({
-      text: shareMessage,
-      title: input.title,
-      url: input.publicUrl
-    });
-    return true;
+    try {
+      await navigator.share({
+        text: shareMessage,
+        title: input.title,
+        url: input.publicUrl
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   return false;
