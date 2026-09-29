@@ -20,7 +20,8 @@ import { errorHandler } from "./middleware/error.middleware.js";
 
 const trustedProductionOrigins = [
   "https://pen-a-wish.vercel.app",
-  "https://pen-a-wish-frontend-six.vercel.app"
+  "https://pen-a-wish-frontend-six.vercel.app",
+  "https://wishmarsh.vercel.app"
 ];
 
 export function createApp() {

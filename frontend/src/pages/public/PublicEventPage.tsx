@@ -141,7 +141,7 @@ export function PublicEventPage() {
       return;
     }
 
-    const pageTitle = `${event.title} | Pen A Wish`;
+    const pageTitle = `${event.title} | Wishmarsh`;
     const description =
       event.description ??
       `Leave wishes and memories for ${event.celebrantName}'s ${event.eventType.toLowerCase()} celebration.`;

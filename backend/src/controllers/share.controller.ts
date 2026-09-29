@@ -24,7 +24,7 @@ function getSharePreviewUrl(request: Request, slug: string) {
 export async function getCelebrationSharePage(request: Request, response: Response) {
   const slug = getRequiredRouteParam(request.params.slug, "slug");
   const event = await publicEventService.getShareImageData(slug);
-  const pageTitle = `${event.celebrantName} | Pen A Wish`;
+  const pageTitle = `${event.celebrantName} | Wishmarsh`;
   const description = `Leave a wish for ${event.celebrantName}'s ${event.title}.`;
   const shareImageUrl = getSharePreviewUrl(request, event.slug);
   const previewImageUrl = event.profileImageUrl ?? event.coverImageUrl ?? shareImageUrl;
@@ -115,7 +115,7 @@ export async function getCelebrationSharePage(request: Request, response: Respon
       <main class="card">
         <img class="image" src="${escapedImage}" alt="${escapedTitle}" />
         <div class="content">
-          <p class="eyebrow">Pen A Wish</p>
+          <p class="eyebrow">Wishmarsh</p>
           <h1 class="title">${escapeHtml(event.celebrantName)}</h1>
           <p class="subtext">Leave a warm wish and visit the celebration page.</p>
           <a class="button" href="${escapedRedirect}">Open celebration</a>
