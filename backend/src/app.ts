@@ -18,9 +18,17 @@ import {
 import { notFoundHandler } from "./middleware/not-found.middleware.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 
+const trustedProductionOrigins = [
+  "https://pen-a-wish.vercel.app",
+  "https://pen-a-wish-frontend-six.vercel.app"
+];
+
 export function createApp() {
   const app = express();
-  const configuredOrigins = env.frontendOrigins;
+  const configuredOrigins = new Set([
+    ...env.frontendOrigins,
+    ...trustedProductionOrigins
+  ]);
 
   app.use(
     cors({
@@ -31,7 +39,7 @@ export function createApp() {
           return;
         }
 
-        const isConfiguredOrigin = configuredOrigins.includes(origin);
+        const isConfiguredOrigin = configuredOrigins.has(origin);
         const isLocalDevOrigin =
           env.nodeEnv !== "production" &&
           /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
